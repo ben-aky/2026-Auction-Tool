@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dynasty Auction — Draft War Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06090f;--s1:#0c1220;--s2:#111c2e;--s3:#192438;
+  --border:#1d3354;--text:#c8d8f0;--dim:#4a6a8a;--muted:#0f1e30;
+  --green:#00e676;--amber:#ffab40;--red:#ff4444;--blue:#40b4ff;--purple:#b040ff;--cyan:#00d4f0;
+  --qb:#ff4d4d;--rb:#00e676;--wr:#40b4ff;--te:#f5c518;
+  --font:'Rajdhani',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px}
+/* topbar */
+.topbar{display:flex;align-items:stretch;background:var(--s1);border-bottom:2px solid var(--border);height:56px;flex-shrink:0}
+.tb-brand{padding:0 20px;display:flex;align-items:center;gap:10px;border-right:1px solid var(--border);font-size:16px;font-weight:700;color:var(--cyan);letter-spacing:1px}
+.tb-stat{padding:0 16px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.tb-stat-label{font-size:10px;color:var(--dim);letter-spacing:.8px;text-transform:uppercase}
+.tb-stat-val{font-family:var(--mono);font-size:18px;font-weight:600}
+.tb-stat-val.green{color:var(--green)}
+.tb-stat-val.amber{color:var(--amber)}
+.tb-actions{margin-left:auto;display:flex;align-items:center;padding:0 16px;gap:10px}
+.btn{padding:6px 14px;border-radius:4px;font-weight:700;font-size:13px;cursor:pointer;border:none;font-family:var(--font);letter-spacing:.5px;transition:all .15s}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--dim)}
+.btn-outline:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn-danger{background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.3);color:var(--red)}
+.btn-danger:hover{background:rgba(255,68,68,.25)}
+.btn-primary{background:var(--cyan);color:#000;font-weight:700}
+.btn-primary:hover{background:#00b8d4}
+a.btn-link{text-decoration:none;padding:6px 14px;border-radius:4px;font-weight:600;font-size:13px;color:var(--dim);border:1px solid var(--border)}
+a.btn-link:hover{border-color:var(--cyan);color:var(--cyan)}
+/* 3-col layout */
+.main{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.6fr) minmax(0,1fr);height:calc(100vh - 56px);overflow:hidden}
+.panel{display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
+.panel:last-child{border-right:none}
+.panel-header{padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.panel-title{font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--dim)}
+.panel-body{flex:1;overflow-y:auto;overflow-x:hidden}
+.panel-body::-webkit-scrollbar{width:4px}
+.panel-body::-webkit-scrollbar-track{background:transparent}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+/* search bar */
+.search-area{padding:10px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
+.search-box{flex:1;min-width:130px;background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:6px 10px;color:var(--text);font-family:var(--font);font-size:13px;outline:none}
+.search-box:focus{border-color:var(--cyan)}
+.pos-btn{padding:4px 10px;border-radius:3px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--s2);color:var(--dim)}
+.pos-btn.active{color:#000;border-color:transparent}
+.pos-btn[data-p=ALL].active{background:var(--cyan)}
+.pos-btn[data-p=QB].active{background:var(--qb)}
+.pos-btn[data-p=RB].active{background:var(--rb)}
+.pos-btn[data-p=WR].active{background:var(--wr)}
+.pos-btn[data-p=TE].active{background:var(--te)}
+/* player rows */
+.player-row{display:flex;align-items:center;padding:6px 12px;border-bottom:1px solid var(--muted);gap:8px;transition:background .1s;cursor:default}
+.player-row:hover{background:var(--s2)}
+.player-row.drafted{opacity:.3;pointer-events:none}
+.pr-pos{width:32px;text-align:center;font-size:11px;font-weight:700;padding:2px 0;border-radius:3px}
+.pr-pos.QB{background:rgba(255,77,77,.2);color:var(--qb)}
+.pr-pos.RB{background:rgba(0,230,118,.2);color:var(--rb)}
+.pr-pos.WR{background:rgba(64,180,255,.2);color:var(--wr)}
+.pr-pos.TE{background:rgba(245,197,24,.2);color:var(--te)}
+.pr-name{flex:1;font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-rank{font-family:var(--mono);font-size:11px;color:var(--dim);width:36px;text-align:right}
+.pr-est{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--amber);width:40px;text-align:right}
+.pr-range{font-family:var(--mono);font-size:10px;color:var(--dim);width:68px;text-align:right}
+.pr-tier{font-size:10px;font-weight:700;width:20px;text-align:center;color:var(--dim)}
+.draft-btn{padding:3px 10px;border-radius:3px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:rgba(0,212,240,.1);color:var(--cyan);font-family:var(--font);letter-spacing:.5px;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.draft-btn:hover{background:var(--cyan);color:#000;border-color:var(--cyan)}
+/* roster panel */
+.slot-group{border-bottom:1px solid var(--border)}
+.slot-group-header{padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--dim);background:var(--muted)}
+.slot-row{display:flex;align-items:center;padding:5px 12px;border-bottom:1px solid var(--muted);min-height:36px;gap:8px}
+.slot-label{font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--dim);width:32px;flex-shrink:0}
+.slot-label.QB{color:var(--qb)}
+.slot-label.RB{color:var(--rb)}
+.slot-label.WR{color:var(--wr)}
+.slot-label.TE{color:var(--te)}
+.slot-label.FLEX{color:var(--cyan)}
+.slot-label.SF{color:var(--purple)}
+.slot-label.BN{color:var(--dim)}
+.slot-empty{font-size:12px;color:var(--muted);font-style:italic}
+.slot-player{flex:1;display:flex;justify-content:space-between;align-items:center}
+.slot-player-name{font-weight:600;font-size:12px}
+.slot-price{font-family:var(--mono);font-size:12px;font-weight:600}
+.slot-price.good{color:var(--green)}
+.slot-price.over{color:var(--red)}
+.slot-price.fair{color:var(--amber)}
+.slot-remove{font-size:16px;color:var(--dim);cursor:pointer;padding:0 4px;border:none;background:transparent;line-height:1}
+.slot-remove:hover{color:var(--red)}
+/* budget bar */
+.budget-section{padding:12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.budget-bar-bg{height:8px;border-radius:4px;background:var(--muted);margin:6px 0;overflow:hidden}
+.budget-bar-fill{height:100%;border-radius:4px;background:var(--green);transition:width .4s}
+.budget-bar-fill.warn{background:var(--amber)}
+.budget-bar-fill.danger{background:var(--red)}
+.budget-nums{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px}
+/* teams panel */
+.team-card{border-bottom:1px solid var(--border);padding:8px 12px;cursor:pointer;transition:background .1s}
+.team-card:hover{background:var(--s2)}
+.team-card.my-team{border-left:2px solid var(--cyan)}
+.team-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.team-name{font-size:13px;font-weight:700}
+.team-meta{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.team-budget-bar{height:4px;border-radius:2px;background:var(--muted);overflow:hidden;margin-top:4px}
+.team-budget-fill{height:100%;background:var(--green);transition:width .3s}
+/* modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:24px;width:420px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--dim);margin-bottom:16px}
+.modal-label{font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--dim);text-transform:uppercase;margin-bottom:4px}
+.modal-row{margin-bottom:14px}
+.price-input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:10px 12px;color:var(--text);font-family:var(--mono);font-size:20px;font-weight:600;outline:none;text-align:center}
+.price-input:focus{border-color:var(--cyan)}
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.team-pick-btn{padding:6px 10px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--s2);color:var(--dim);font-family:var(--font);transition:all .12s;text-align:left}
+.team-pick-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.team-pick-btn.selected{background:var(--cyan);color:#000;border-color:var(--cyan)}
+.team-pick-btn.my-team-btn.selected{background:var(--purple);border-color:var(--purple)}
+.slot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:6px}
+.slot-pick-btn{padding:5px 6px;border-radius:3px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--s2);color:var(--dim);font-family:var(--font);transition:all .12s;text-align:center}
+.slot-pick-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.slot-pick-btn.selected{background:var(--purple);border-color:var(--purple);color:#fff}
+.slot-pick-btn:disabled{opacity:.3;cursor:not-allowed}
+.price-warning{font-size:12px;color:var(--red);margin-top:6px;display:none}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+/* toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:10px 16px;font-size:13px;color:var(--text);z-index:9999;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<div style="display:flex;flex-direction:column;height:100vh">
+<!-- topbar -->
+<div class="topbar">
+  <div class="tb-brand">⚡ DRAFT WAR ROOM</div>
+  <div class="tb-stat">
+    <div class="tb-stat-label">Remaining</div>
+    <div class="tb-stat-val green" id="stat-remaining">$300</div>
+  </div>
+  <div class="tb-stat">
+    <div class="tb-stat-label">Spent</div>
+    <div class="tb-stat-val amber" id="stat-spent">$0</div>
+  </div>
+  <div class="tb-stat">
+    <div class="tb-stat-label">Slots Left</div>
+    <div class="tb-stat-val" id="stat-slots">30</div>
+  </div>
+  <div class="tb-stat">
+    <div class="tb-stat-label">Max Bid</div>
+    <div class="tb-stat-val green" id="stat-maxbid">$300</div>
+  </div>
+  <div class="tb-stat">
+    <div class="tb-stat-label">Drafted</div>
+    <div class="tb-stat-val" id="stat-drafted">0 players</div>
+  </div>
+  <div class="tb-actions">
+    <a href="index.html" class="btn-link">Analytics</a>
+    <button class="btn btn-outline" onclick="exportDraft()">Export CSV</button>
+    <button class="btn btn-danger" onclick="resetDraft()">Reset Draft</button>
+  </div>
+</div>
+
+<!-- 3-col main -->
+<div class="main">
+
+  <!-- LEFT: Available players -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Available Players</div>
+      <div style="font-size:11px;color:var(--dim);font-family:var(--mono)"><span id="avail-count">—</span> remaining</div>
+    </div>
+    <div class="search-area">
+      <input class="search-box" id="dr-search" placeholder="Search…" autocomplete="off">
+      <button class="pos-btn active" data-p="ALL">ALL</button>
+      <button class="pos-btn" data-p="QB">QB</button>
+      <button class="pos-btn" data-p="RB">RB</button>
+      <button class="pos-btn" data-p="WR">WR</button>
+      <button class="pos-btn" data-p="TE">TE</button>
+      <button class="pos-btn" data-p="K" style="color:var(--dim)">PICK</button>
+      <button class="pos-btn" data-p="DRAFTED" style="border-color:rgba(255,68,68,.3);color:var(--red)">DRAFTED</button>
+    </div>
+    <div class="panel-body" id="player-board"></div>
+  </div>
+
+  <!-- CENTER: My roster -->
+  <div class="panel">
+    <div class="budget-section">
+      <div class="budget-nums">
+        <span style="color:var(--dim)">BUDGET</span>
+        <span style="font-weight:700"><span id="b-spent" style="color:var(--amber)">$0</span> / $300</span>
+      </div>
+      <div class="budget-bar-bg"><div class="budget-bar-fill" id="b-bar" style="width:0%"></div></div>
+      <div class="budget-nums">
+        <span style="color:var(--dim)">Remaining: <span id="b-rem" style="color:var(--green)">$300</span></span>
+        <span style="color:var(--dim)">Spendable: <span style="color:var(--cyan)">$270</span></span>
+      </div>
+    </div>
+    <div class="panel-header" style="flex-shrink:0">
+      <div class="panel-title">My Roster (Team 1)</div>
+      <div style="font-size:11px;color:var(--dim);font-family:var(--mono)"><span id="slots-filled">0</span>/30 filled</div>
+    </div>
+    <div class="panel-body" id="my-roster"></div>
+  </div>
+
+  <!-- RIGHT: Teams -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">All Teams</div>
+      <button class="btn btn-outline" style="font-size:11px;padding:3px 8px" onclick="toggleShowAll()">Show Picks</button>
+    </div>
+    <div class="panel-body" id="teams-panel"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- Draft modal -->
+<div class="modal-bg" id="draft-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-player-name">Player Name</div>
+    <div class="modal-sub" id="modal-player-info">QB · Rank #5 · Est $32 ($27–$37)</div>
+    <div class="price-warning" id="price-warning">⚠ Price exceeds your high estimate!</div>
+
+    <div class="modal-row">
+      <div class="modal-label">Actual Price Paid</div>
+      <input class="price-input" id="modal-price" type="number" min="1" max="300" value="1">
+    </div>
+
+    <div class="modal-row">
+      <div class="modal-label">Drafted By</div>
+      <div class="team-grid" id="modal-teams"></div>
+    </div>
+
+    <div class="modal-row" id="slot-row" style="display:none">
+      <div class="modal-label">Assign to Roster Slot</div>
+      <div class="slot-grid" id="modal-slots"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1" onclick="confirmDraft()">CONFIRM DRAFT</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Data ─────────────────────────────────────────────────────────────────────
+const ALL_PLAYERS = [{"name": "Bijan Robinson", "pos": "RB", "rank": 12.8, "pos_rank": 1, "std": 4.1, "hist": 41.3, "est": 46.7, "low": 39, "high": 53, "apps": 5, "tier": 1}, {"name": "Jahmyr Gibbs", "pos": "RB", "rank": 15.1, "pos_rank": 2, "std": 3.5, "hist": 39.8, "est": 44.2, "low": 37, "high": 50, "apps": 5, "tier": 1}, {"name": "Josh Allen", "pos": "QB", "rank": 1.3, "pos_rank": 1, "std": 0.6, "hist": 34.5, "est": 43.6, "low": 37, "high": 50, "apps": 5, "tier": 1}, {"name": "Ja'Marr Chase", "pos": "WR", "rank": 6.4, "pos_rank": 1, "std": 1.9, "hist": 35.3, "est": 42.9, "low": 36, "high": 49, "apps": 5, "tier": 1}, {"name": "Puka Nacua", "pos": "WR", "rank": 8.5, "pos_rank": 2, "std": 2.6, "hist": 39.7, "est": 41.5, "low": 35, "high": 47, "apps": 5, "tier": 1}, {"name": "Jaxon Smith-Njigba", "pos": "WR", "rank": 8.8, "pos_rank": 3, "std": 1.5, "hist": 39.0, "est": 40.9, "low": 34, "high": 47, "apps": 5, "tier": 1}, {"name": "Drake Maye", "pos": "QB", "rank": 2.1, "pos_rank": 2, "std": 1.1, "hist": 33.7, "est": 40.4, "low": 34, "high": 46, "apps": 5, "tier": 1}, {"name": "Ashton Jeanty", "pos": "RB", "rank": 20.6, "pos_rank": 3, "std": 3.9, "hist": 31.4, "est": 38.0, "low": 32, "high": 43, "apps": 5, "tier": 1}, {"name": "De'Von Achane", "pos": "RB", "rank": 24.7, "pos_rank": 4, "std": 4.8, "hist": 35.0, "est": 36.9, "low": 31, "high": 42, "apps": 5, "tier": 1}, {"name": "Jonathan Taylor", "pos": "RB", "rank": 30.8, "pos_rank": 7, "std": 6.2, "hist": 30.5, "est": 32.9, "low": 27, "high": 37, "apps": 5, "tier": 1}, {"name": "Omarion Hampton", "pos": "RB", "rank": 30.3, "pos_rank": 5, "std": 6.7, "hist": 29.7, "est": 32.9, "low": 27, "high": 37, "apps": 5, "tier": 1}, {"name": "Lamar Jackson", "pos": "QB", "rank": 5.8, "pos_rank": 3, "std": 5.0, "hist": 29.7, "est": 32.7, "low": 27, "high": 37, "apps": 5, "tier": 1}, {"name": "James Cook", "pos": "RB", "rank": 30.4, "pos_rank": 6, "std": 4.6, "hist": 28.7, "est": 32.5, "low": 27, "high": 37, "apps": 5, "tier": 2}, {"name": "Justin Jefferson", "pos": "WR", "rank": 16.1, "pos_rank": 4, "std": 4.5, "hist": 29.5, "est": 32.4, "low": 27, "high": 37, "apps": 5, "tier": 2}, {"name": "CeeDee Lamb", "pos": "WR", "rank": 17.4, "pos_rank": 5, "std": 4.6, "hist": 31.4, "est": 32.3, "low": 27, "high": 37, "apps": 5, "tier": 2}, {"name": "Jayden Daniels", "pos": "QB", "rank": 6.3, "pos_rank": 4, "std": 3.5, "hist": 28.6, "est": 31.8, "low": 27, "high": 36, "apps": 5, "tier": 1}, {"name": "Amon-Ra St. Brown", "pos": "WR", "rank": 19.5, "pos_rank": 6, "std": 4.5, "hist": 32.1, "est": 31.4, "low": 26, "high": 36, "apps": 5, "tier": 2}, {"name": "Malik Nabers", "pos": "WR", "rank": 20.1, "pos_rank": 7, "std": 3.8, "hist": 31.5, "est": 30.9, "low": 26, "high": 35, "apps": 5, "tier": 2}, {"name": "Joe Burrow", "pos": "QB", "rank": 7.9, "pos_rank": 5, "std": 5.9, "hist": 29.3, "est": 30.7, "low": 26, "high": 35, "apps": 5, "tier": 1}, {"name": "Patrick Mahomes", "pos": "QB", "rank": 9.3, "pos_rank": 6, "std": 4.1, "hist": 24.0, "est": 28.2, "low": 23, "high": 32, "apps": 5, "tier": 2}, {"name": "Caleb Williams", "pos": "QB", "rank": 10.6, "pos_rank": 7, "std": 7.6, "hist": 26.1, "est": 28.0, "low": 23, "high": 32, "apps": 5, "tier": 2}, {"name": "Drake London", "pos": "WR", "rank": 24.9, "pos_rank": 8, "std": 4.9, "hist": 27.6, "est": 27.7, "low": 23, "high": 31, "apps": 5, "tier": 2}, {"name": "Brock Bowers", "pos": "TE", "rank": 35.0, "pos_rank": 1, "std": 5.1, "hist": 30.3, "est": 27.2, "low": 23, "high": 31, "apps": 5, "tier": 1}, {"name": "Trey McBride", "pos": "TE", "rank": 36.3, "pos_rank": 2, "std": 7.2, "hist": 31.0, "est": 27.1, "low": 23, "high": 31, "apps": 5, "tier": 1}, {"name": "Justin Herbert", "pos": "QB", "rank": 13.4, "pos_rank": 8, "std": 7.2, "hist": 28.2, "est": 27.1, "low": 23, "high": 31, "apps": 5, "tier": 2}, {"name": "Breece Hall", "pos": "RB", "rank": 46.2, "pos_rank": 8, "std": 9.8, "hist": 25.8, "est": 26.7, "low": 22, "high": 30, "apps": 5, "tier": 2}, {"name": "TreVeyon Henderson", "pos": "RB", "rank": 52.8, "pos_rank": 9, "std": 13.3, "hist": 28.2, "est": 25.8, "low": 21, "high": 29, "apps": 5, "tier": 2}, {"name": "Jalen Hurts", "pos": "QB", "rank": 15.5, "pos_rank": 9, "std": 5.5, "hist": 25.7, "est": 25.5, "low": 21, "high": 29, "apps": 5, "tier": 2}, {"name": "Nico Collins", "pos": "WR", "rank": 29.8, "pos_rank": 9, "std": 4.7, "hist": 24.7, "est": 25.3, "low": 21, "high": 29, "apps": 5, "tier": 2}, {"name": "Tetairoa McMillan", "pos": "WR", "rank": 30.8, "pos_rank": 10, "std": 5.3, "hist": 25.5, "est": 25.1, "low": 21, "high": 28, "apps": 5, "tier": 2}, {"name": "Christian McCaffrey", "pos": "RB", "rank": 62.2, "pos_rank": 13, "std": 14.0, "hist": 30.8, "est": 24.7, "low": 20, "high": 28, "apps": 5, "tier": 2}, {"name": "Jaxson Dart", "pos": "QB", "rank": 18.8, "pos_rank": 10, "std": 6.7, "hist": 26.9, "est": 24.6, "low": 20, "high": 28, "apps": 5, "tier": 2}, {"name": "George Pickens", "pos": "WR", "rank": 33.0, "pos_rank": 11, "std": 5.0, "hist": 24.7, "est": 24.4, "low": 20, "high": 28, "apps": 5, "tier": 3}, {"name": "Chase Brown", "pos": "RB", "rank": 58.5, "pos_rank": 11, "std": 6.5, "hist": 24.7, "est": 23.7, "low": 20, "high": 27, "apps": 5, "tier": 3}, {"name": "Garrett Wilson", "pos": "WR", "rank": 37.9, "pos_rank": 13, "std": 5.5, "hist": 24.3, "est": 22.9, "low": 19, "high": 26, "apps": 5, "tier": 3}, {"name": "Trevor Lawrence", "pos": "QB", "rank": 23.9, "pos_rank": 13, "std": 15.1, "hist": 25.8, "est": 22.8, "low": 19, "high": 26, "apps": 5, "tier": 2}, {"name": "Brock Purdy", "pos": "QB", "rank": 22.9, "pos_rank": 11, "std": 11.2, "hist": 24.8, "est": 22.8, "low": 19, "high": 26, "apps": 5, "tier": 2}, {"name": "Bo Nix", "pos": "QB", "rank": 23.0, "pos_rank": 12, "std": 8.1, "hist": 25.1, "est": 22.8, "low": 19, "high": 26, "apps": 5, "tier": 2}, {"name": "Kenneth Walker", "pos": "RB", "rank": 53.1, "pos_rank": 10, "std": 10.1, "hist": 17.4, "est": 22.8, "low": 19, "high": 26, "apps": 5, "tier": 3}, {"name": "Bucky Irving", "pos": "RB", "rank": 60.1, "pos_rank": 12, "std": 10.2, "hist": 22.0, "est": 22.6, "low": 19, "high": 25, "apps": 5, "tier": 3}, {"name": "Chris Olave", "pos": "WR", "rank": 39.1, "pos_rank": 14, "std": 5.5, "hist": 23.5, "est": 22.5, "low": 19, "high": 25, "apps": 5, "tier": 3}, {"name": "Saquon Barkley", "pos": "RB", "rank": 65.9, "pos_rank": 14, "std": 9.2, "hist": 24.3, "est": 22.2, "low": 18, "high": 25, "apps": 5, "tier": 3}, {"name": "Emeka Egbuka", "pos": "WR", "rank": 35.8, "pos_rank": 12, "std": 6.4, "hist": 18.8, "est": 21.9, "low": 18, "high": 25, "apps": 5, "tier": 3}, {"name": "Quinshon Judkins", "pos": "RB", "rank": 69.1, "pos_rank": 15, "std": 7.7, "hist": 24.7, "est": 21.8, "low": 18, "high": 25, "apps": 5, "tier": 3}, {"name": "Colston Loveland", "pos": "TE", "rank": 55.5, "pos_rank": 3, "std": 7.0, "hist": 22.6, "est": 20.6, "low": 17, "high": 23, "apps": 5, "tier": 2}, {"name": "Rashee Rice", "pos": "WR", "rank": 46.1, "pos_rank": 16, "std": 13.6, "hist": 22.1, "est": 20.5, "low": 17, "high": 23, "apps": 5, "tier": 3}, {"name": "Tee Higgins", "pos": "WR", "rank": 46.5, "pos_rank": 17, "std": 7.9, "hist": 20.7, "est": 20.0, "low": 17, "high": 23, "apps": 5, "tier": 3}, {"name": "Kyren Williams", "pos": "RB", "rank": 74.5, "pos_rank": 17, "std": 8.6, "hist": 21.2, "est": 19.9, "low": 16, "high": 22, "apps": 5, "tier": 3}, {"name": "Jordan Love", "pos": "QB", "rank": 33.2, "pos_rank": 14, "std": 13.4, "hist": 22.1, "est": 19.8, "low": 16, "high": 22, "apps": 5, "tier": 3}, {"name": "Ladd McConkey", "pos": "WR", "rank": 44.3, "pos_rank": 15, "std": 6.0, "hist": 17.7, "est": 19.7, "low": 16, "high": 22, "apps": 5, "tier": 3}, {"name": "Tyler Warren", "pos": "TE", "rank": 61.1, "pos_rank": 4, "std": 5.2, "hist": 22.6, "est": 19.6, "low": 16, "high": 22, "apps": 5, "tier": 2}, {"name": "RJ Harvey", "pos": "RB", "rank": 80.9, "pos_rank": 19, "std": 10.7, "hist": 23.1, "est": 19.5, "low": 16, "high": 22, "apps": 5, "tier": 3}, {"name": "Josh Jacobs", "pos": "RB", "rank": 80.6, "pos_rank": 18, "std": 12.4, "hist": 22.4, "est": 19.4, "low": 16, "high": 22, "apps": 5, "tier": 3}, {"name": "Dak Prescott", "pos": "QB", "rank": 35.2, "pos_rank": 15, "std": 13.7, "hist": 21.4, "est": 19.3, "low": 16, "high": 22, "apps": 5, "tier": 3}, {"name": "Travis Etienne", "pos": "RB", "rank": 74.1, "pos_rank": 16, "std": 6.1, "hist": 17.2, "est": 18.9, "low": 16, "high": 21, "apps": 5, "tier": 3}, {"name": "A.J. Brown", "pos": "WR", "rank": 49.8, "pos_rank": 18, "std": 8.4, "hist": 18.4, "est": 18.8, "low": 15, "high": 21, "apps": 5, "tier": 3}, {"name": "Harold Fannin", "pos": "TE", "rank": 65.6, "pos_rank": 5, "std": 8.1, "hist": 21.7, "est": 18.7, "low": 15, "high": 21, "apps": 5, "tier": 2}, {"name": "Cam Skattebo", "pos": "RB", "rank": 87.8, "pos_rank": 21, "std": 15.8, "hist": 23.8, "est": 18.7, "low": 15, "high": 21, "apps": 5, "tier": 3}, {"name": "Zay Flowers", "pos": "WR", "rank": 56.0, "pos_rank": 21, "std": 9.5, "hist": 20.2, "est": 18.3, "low": 15, "high": 21, "apps": 5, "tier": 3}, {"name": "Luther Burden", "pos": "WR", "rank": 51.5, "pos_rank": 19, "std": 10.2, "hist": 15.9, "est": 17.8, "low": 15, "high": 20, "apps": 5, "tier": 3}, {"name": "Marvin Harrison", "pos": "WR", "rank": 56.6, "pos_rank": 22, "std": 9.5, "hist": 18.4, "est": 17.6, "low": 14, "high": 20, "apps": 5, "tier": 3}, {"name": "Rome Odunze", "pos": "WR", "rank": 55.1, "pos_rank": 20, "std": 11.3, "hist": 17.4, "est": 17.6, "low": 14, "high": 20, "apps": 5, "tier": 3}, {"name": "Brian Thomas", "pos": "WR", "rank": 58.5, "pos_rank": 24, "std": 13.7, "hist": 18.0, "est": 17.2, "low": 14, "high": 19, "apps": 5, "tier": 3}, {"name": "Javonte Williams", "pos": "RB", "rank": 86.2, "pos_rank": 20, "std": 15.5, "hist": 17.2, "est": 17.2, "low": 14, "high": 19, "apps": 5, "tier": 3}, {"name": "Tucker Kraft", "pos": "TE", "rank": 65.9, "pos_rank": 6, "std": 7.7, "hist": 16.0, "est": 17.1, "low": 14, "high": 19, "apps": 5, "tier": 3}, {"name": "DeVonta Smith", "pos": "WR", "rank": 58.5, "pos_rank": 25, "std": 11.8, "hist": 16.4, "est": 16.7, "low": 14, "high": 19, "apps": 5, "tier": 3}, {"name": "Baker Mayfield", "pos": "QB", "rank": 50.4, "pos_rank": 16, "std": 13.9, "hist": 19.8, "est": 16.6, "low": 14, "high": 19, "apps": 5, "tier": 3}, {"name": "Jameson Williams", "pos": "WR", "rank": 61.6, "pos_rank": 26, "std": 10.1, "hist": 16.7, "est": 16.4, "low": 13, "high": 18, "apps": 5, "tier": 3}, {"name": "Sam LaPorta", "pos": "TE", "rank": 69.2, "pos_rank": 7, "std": 5.7, "hist": 14.5, "est": 16.3, "low": 13, "high": 18, "apps": 5, "tier": 3}, {"name": "Jaylen Waddle", "pos": "WR", "rank": 58.1, "pos_rank": 23, "std": 14.6, "hist": 14.5, "est": 16.3, "low": 13, "high": 18, "apps": 5, "tier": 3}, {"name": "Derrick Henry", "pos": "RB", "rank": 96.7, "pos_rank": 22, "std": 13.0, "hist": 18.4, "est": 16.2, "low": 13, "high": 18, "apps": 5, "tier": 3}, {"name": "C.J. Stroud", "pos": "QB", "rank": 54.8, "pos_rank": 17, "std": 14.6, "hist": 18.0, "est": 15.6, "low": 13, "high": 17, "apps": 5, "tier": 3}, {"name": "Kyle Pitts", "pos": "TE", "rank": 76.1, "pos_rank": 8, "std": 8.6, "hist": 14.5, "est": 15.4, "low": 13, "high": 17, "apps": 5, "tier": 3}, {"name": "Jared Goff", "pos": "QB", "rank": 61.4, "pos_rank": 18, "std": 12.3, "hist": 18.3, "est": 15.0, "low": 12, "high": 17, "apps": 5, "tier": 4}, {"name": "Cam Ward", "pos": "QB", "rank": 64.7, "pos_rank": 19, "std": 13.3, "hist": 16.8, "est": 14.4, "low": 12, "high": 16, "apps": 5, "tier": 4}, {"name": "Sam Darnold", "pos": "QB", "rank": 68.1, "pos_rank": 20, "std": 11.2, "hist": 17.0, "est": 14.0, "low": 11, "high": 16, "apps": 5, "tier": 4}, {"name": "D'Andre Swift", "pos": "RB", "rank": 105.3, "pos_rank": 24, "std": 8.8, "hist": 12.6, "est": 13.7, "low": 11, "high": 15, "apps": 5, "tier": 4}, {"name": "Tyler Shough", "pos": "QB", "rank": 78.1, "pos_rank": 22, "std": 12.8, "hist": 18.2, "est": 13.6, "low": 11, "high": 15, "apps": 5, "tier": 4}, {"name": "Zach Charbonnet", "pos": "RB", "rank": 109.3, "pos_rank": 25, "std": 10.8, "hist": 13.3, "est": 13.4, "low": 11, "high": 15, "apps": 5, "tier": 4}, {"name": "Oronde Gadsden", "pos": "TE", "rank": 90.2, "pos_rank": 9, "std": 13.9, "hist": 11.9, "est": 13.0, "low": 11, "high": 14, "apps": 5, "tier": 3}, {"name": "Bhayshul Tuten", "pos": "RB", "rank": 100.9, "pos_rank": 23, "std": 14.1, "hist": 8.0, "est": 12.9, "low": 10, "high": 14, "apps": 5, "tier": 4}, {"name": "DK Metcalf", "pos": "WR", "rank": 86.8, "pos_rank": 27, "std": 14.1, "hist": 13.0, "est": 12.3, "low": 10, "high": 14, "apps": 5, "tier": 4}, {"name": "Kyle Monangai", "pos": "RB", "rank": 118.5, "pos_rank": 26, "std": 10.4, "hist": 12.2, "est": 12.2, "low": 10, "high": 14, "apps": 5, "tier": 4}, {"name": "Jaylen Warren", "pos": "RB", "rank": 121.0, "pos_rank": 27, "std": 10.9, "hist": 12.6, "est": 12.1, "low": 10, "high": 13, "apps": 5, "tier": 4}, {"name": "Bryce Young", "pos": "QB", "rank": 93.8, "pos_rank": 24, "std": 11.4, "hist": 16.4, "est": 12.0, "low": 10, "high": 13, "apps": 5, "tier": 4}, {"name": "Kyler Murray", "pos": "QB", "rank": 75.2, "pos_rank": 21, "std": 15.6, "hist": 10.9, "est": 11.9, "low": 10, "high": 13, "apps": 5, "tier": 4}, {"name": "Daniel Jones", "pos": "QB", "rank": 95.8, "pos_rank": 25, "std": 17.8, "hist": 13.8, "est": 11.3, "low": 9, "high": 12, "apps": 5, "tier": 4}, {"name": "Jordan Addison", "pos": "WR", "rank": 87.1, "pos_rank": 28, "std": 10.4, "hist": 9.1, "est": 11.3, "low": 9, "high": 12, "apps": 5, "tier": 4}, {"name": "Christian Watson", "pos": "WR", "rank": 89.8, "pos_rank": 29, "std": 21.1, "hist": 9.5, "est": 11.2, "low": 9, "high": 12, "apps": 5, "tier": 4}, {"name": "Dalton Kincaid", "pos": "TE", "rank": 105.2, "pos_rank": 10, "std": 16.7, "hist": 9.7, "est": 11.0, "low": 9, "high": 12, "apps": 5, "tier": 3}, {"name": "Alec Pierce", "pos": "WR", "rank": 94.7, "pos_rank": 31, "std": 29.6, "hist": 10.7, "est": 10.9, "low": 9, "high": 12, "apps": 5, "tier": 4}, {"name": "Jake Ferguson", "pos": "TE", "rank": 114.2, "pos_rank": 11, "std": 18.4, "hist": 12.0, "est": 10.8, "low": 9, "high": 12, "apps": 5, "tier": 3}, {"name": "Courtland Sutton", "pos": "WR", "rank": 102.5, "pos_rank": 36, "std": 12.1, "hist": 12.7, "est": 10.8, "low": 9, "high": 12, "apps": 5, "tier": 4}, {"name": "Terry McLaurin", "pos": "WR", "rank": 98.8, "pos_rank": 34, "std": 10.8, "hist": 11.1, "est": 10.7, "low": 9, "high": 12, "apps": 5, "tier": 4}, {"name": "Matthew Stafford", "pos": "QB", "rank": 96.7, "pos_rank": 26, "std": 7.6, "hist": 11.6, "est": 10.6, "low": 9, "high": 12, "apps": 5, "tier": 4}, {"name": "Brenton Strange", "pos": "TE", "rank": 118.2, "pos_rank": 13, "std": 17.2, "hist": 12.2, "est": 10.5, "low": 8, "high": 12, "apps": 5, "tier": 3}, {"name": "Blake Corum", "pos": "RB", "rank": 134.1, "pos_rank": 28, "std": 18.6, "hist": 10.9, "est": 10.5, "low": 8, "high": 12, "apps": 5, "tier": 4}, {"name": "Ricky Pearsall", "pos": "WR", "rank": 94.2, "pos_rank": 30, "std": 10.8, "hist": 8.7, "est": 10.5, "low": 8, "high": 12, "apps": 5, "tier": 4}, {"name": "Davante Adams", "pos": "WR", "rank": 109.5, "pos_rank": 41, "std": 13.9, "hist": 13.5, "est": 10.4, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "Chuba Hubbard", "pos": "RB", "rank": 141.2, "pos_rank": 32, "std": 18.7, "hist": 12.5, "est": 10.4, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "Rico Dowdle", "pos": "RB", "rank": 136.5, "pos_rank": 30, "std": 15.1, "hist": 11.4, "est": 10.4, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "Michael Wilson", "pos": "WR", "rank": 102.2, "pos_rank": 35, "std": 14.4, "hist": 10.9, "est": 10.3, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "DJ Moore", "pos": "WR", "rank": 96.1, "pos_rank": 32, "std": 14.7, "hist": 8.7, "est": 10.3, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "Malik Willis", "pos": "QB", "rank": 79.2, "pos_rank": 23, "std": 19.0, "hist": 6.0, "est": 10.3, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "Xavier Worthy", "pos": "WR", "rank": 98.2, "pos_rank": 33, "std": 18.8, "hist": 9.1, "est": 10.2, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "Wan'Dale Robinson", "pos": "WR", "rank": 108.1, "pos_rank": 40, "std": 14.8, "hist": 11.4, "est": 10.0, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "Travis Hunter", "pos": "WR", "rank": 117.3, "pos_rank": 43, "std": 24.9, "hist": 13.2, "est": 9.8, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "David Montgomery", "pos": "RB", "rank": 134.2, "pos_rank": 29, "std": 19.1, "hist": 8.1, "est": 9.8, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "Tyler Allgeier", "pos": "RB", "rank": 138.9, "pos_rank": 31, "std": 19.7, "hist": 9.2, "est": 9.7, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "Jakobi Meyers", "pos": "WR", "rank": 104.8, "pos_rank": 37, "std": 15.6, "hist": 9.3, "est": 9.7, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "Michael Pittman", "pos": "WR", "rank": 105.7, "pos_rank": 39, "std": 10.1, "hist": 9.4, "est": 9.7, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "George Kittle", "pos": "TE", "rank": 118.1, "pos_rank": 12, "std": 22.7, "hist": 8.6, "est": 9.6, "low": 8, "high": 11, "apps": 5, "tier": 4}, {"name": "Jayden Higgins", "pos": "WR", "rank": 104.8, "pos_rank": 38, "std": 10.4, "hist": 8.2, "est": 9.5, "low": 8, "high": 10, "apps": 5, "tier": 4}, {"name": "Rhamondre Stevenson", "pos": "RB", "rank": 142.0, "pos_rank": 33, "std": 10.3, "hist": 8.9, "est": 9.4, "low": 7, "high": 10, "apps": 5, "tier": 4}, {"name": "Michael Penix", "pos": "QB", "rank": 114.7, "pos_rank": 27, "std": 18.7, "hist": 9.9, "est": 9.2, "low": 7, "high": 10, "apps": 5, "tier": 4}, {"name": "J.J. McCarthy", "pos": "QB", "rank": 119.6, "pos_rank": 28, "std": 23.1, "hist": 10.6, "est": 9.1, "low": 7, "high": 10, "apps": 5, "tier": 4}, {"name": "Woody Marks", "pos": "RB", "rank": 159.0, "pos_rank": 34, "std": 18.7, "hist": 11.0, "est": 8.7, "low": 7, "high": 10, "apps": 5, "tier": 4}, {"name": "Quentin Johnston", "pos": "WR", "rank": 119.7, "pos_rank": 45, "std": 19.2, "hist": 10.1, "est": 8.7, "low": 7, "high": 10, "apps": 5, "tier": 4}, {"name": "Trey Benson", "pos": "RB", "rank": 159.0, "pos_rank": 35, "std": 24.7, "hist": 10.3, "est": 8.5, "low": 7, "high": 9, "apps": 5, "tier": 4}, {"name": "Isaiah Likely", "pos": "TE", "rank": 119.7, "pos_rank": 14, "std": 25.3, "hist": 4.7, "est": 8.5, "low": 7, "high": 9, "apps": 5, "tier": 4}, {"name": "Parker Washington", "pos": "WR", "rank": 119.6, "pos_rank": 44, "std": 31.6, "hist": 8.9, "est": 8.4, "low": 7, "high": 9, "apps": 5, "tier": 4}, {"name": "Mike Evans", "pos": "WR", "rank": 116.3, "pos_rank": 42, "std": 11.4, "hist": 6.9, "est": 8.2, "low": 6, "high": 9, "apps": 5, "tier": 4}, {"name": "Matthew Golden", "pos": "WR", "rank": 130.0, "pos_rank": 52, "std": 10.6, "hist": 9.3, "est": 7.8, "low": 6, "high": 8, "apps": 5, "tier": 4}, {"name": "Dallas Goedert", "pos": "TE", "rank": 148.4, "pos_rank": 16, "std": 22.7, "hist": 9.1, "est": 7.6, "low": 6, "high": 8, "apps": 5, "tier": 4}, {"name": "Jacory Croskey-Merritt", "pos": "RB", "rank": 166.8, "pos_rank": 38, "std": 14.7, "hist": 8.4, "est": 7.5, "low": 6, "high": 8, "apps": 5, "tier": 4}, {"name": "Khalil Shakir", "pos": "WR", "rank": 127.9, "pos_rank": 50, "std": 10.0, "hist": 7.5, "est": 7.5, "low": 6, "high": 8, "apps": 5, "tier": 4}, {"name": "Chris Godwin", "pos": "WR", "rank": 124.3, "pos_rank": 46, "std": 9.9, "hist": 6.4, "est": 7.5, "low": 6, "high": 8, "apps": 5, "tier": 4}, {"name": "Jayden Reed", "pos": "WR", "rank": 126.3, "pos_rank": 48, "std": 11.7, "hist": 6.6, "est": 7.4, "low": 6, "high": 8, "apps": 5, "tier": 4}, {"name": "Tony Pollard", "pos": "RB", "rank": 165.8, "pos_rank": 37, "std": 16.4, "hist": 7.1, "est": 7.2, "low": 6, "high": 8, "apps": 5, "tier": 4}, {"name": "Mason Taylor", "pos": "TE", "rank": 141.5, "pos_rank": 15, "std": 15.9, "hist": 5.8, "est": 7.2, "low": 6, "high": 8, "apps": 5, "tier": 4}, {"name": "Jauan Jennings", "pos": "WR", "rank": 131.6, "pos_rank": 53, "std": 13.4, "hist": 7.2, "est": 7.2, "low": 6, "high": 8, "apps": 5, "tier": 4}, {"name": "Kenneth Gainwell", "pos": "RB", "rank": 160.8, "pos_rank": 36, "std": 20.3, "hist": 5.7, "est": 7.2, "low": 6, "high": 8, "apps": 5, "tier": 4}, {"name": "Josh Downs", "pos": "WR", "rank": 127.3, "pos_rank": 49, "std": 13.8, "hist": 5.7, "est": 7.1, "low": 6, "high": 8, "apps": 5, "tier": 4}, {"name": "Shedeur Sanders", "pos": "QB", "rank": 145.4, "pos_rank": 30, "std": 16.1, "hist": 6.5, "est": 6.9, "low": 5, "high": 7, "apps": 5, "tier": 5}, {"name": "Tyrone Tracy", "pos": "RB", "rank": 168.6, "pos_rank": 39, "std": 21.3, "hist": 6.4, "est": 6.9, "low": 5, "high": 7, "apps": 5, "tier": 5}, {"name": "Jalen Coker", "pos": "WR", "rank": 146.3, "pos_rank": 55, "std": 18.9, "hist": 9.2, "est": 6.8, "low": 5, "high": 7, "apps": 5, "tier": 4}, {"name": "AJ Barner", "pos": "TE", "rank": 153.0, "pos_rank": 18, "std": 25.5, "hist": 7.0, "est": 6.8, "low": 5, "high": 7, "apps": 5, "tier": 4}, {"name": "Brandon Aiyuk", "pos": "WR", "rank": 124.7, "pos_rank": 47, "std": 17.5, "hist": 3.9, "est": 6.8, "low": 5, "high": 7, "apps": 5, "tier": 4}, {"name": "Romeo Doubs", "pos": "WR", "rank": 129.0, "pos_rank": 51, "std": 14.4, "hist": 3.8, "est": 6.5, "low": 5, "high": 7, "apps": 5, "tier": 4}, {"name": "Stefon Diggs", "pos": "WR", "rank": 142.6, "pos_rank": 54, "std": 19.4, "hist": 6.7, "est": 6.4, "low": 5, "high": 7, "apps": 5, "tier": 5}, {"name": "Terrance Ferguson", "pos": "TE", "rank": 150.3, "pos_rank": 17, "std": 23.8, "hist": 4.4, "est": 6.4, "low": 5, "high": 7, "apps": 5, "tier": 4}, {"name": "Tua Tagovailoa", "pos": "QB", "rank": 143.2, "pos_rank": 29, "std": 9.3, "hist": 4.0, "est": 6.4, "low": 5, "high": 7, "apps": 5, "tier": 5}, {"name": "J.K. Dobbins", "pos": "RB", "rank": 175.2, "pos_rank": 40, "std": 18.4, "hist": 5.8, "est": 6.3, "low": 5, "high": 7, "apps": 5, "tier": 5}, {"name": "Mark Andrews", "pos": "TE", "rank": 169.0, "pos_rank": 20, "std": 17.9, "hist": 7.8, "est": 6.2, "low": 5, "high": 7, "apps": 5, "tier": 4}, {"name": "Mac Jones", "pos": "QB", "rank": 149.2, "pos_rank": 31, "std": 36.0, "hist": 3.6, "est": 6.1, "low": 5, "high": 7, "apps": 5, "tier": 5}, {"name": "Juwan Johnson", "pos": "TE", "rank": 165.6, "pos_rank": 19, "std": 17.5, "hist": 6.4, "est": 6.0, "low": 5, "high": 6, "apps": 5, "tier": 4}, {"name": "Alvin Kamara", "pos": "RB", "rank": 193.5, "pos_rank": 45, "std": 21.4, "hist": 7.9, "est": 5.8, "low": 4, "high": 6, "apps": 5, "tier": 5}, {"name": "T.J. Hockenson", "pos": "TE", "rank": 170.2, "pos_rank": 21, "std": 19.7, "hist": 6.8, "est": 5.8, "low": 4, "high": 6, "apps": 5, "tier": 4}, {"name": "Rashid Shaheed", "pos": "WR", "rank": 154.9, "pos_rank": 57, "std": 14.0, "hist": 6.1, "est": 5.6, "low": 4, "high": 6, "apps": 5, "tier": 5}, {"name": "Tre' Harris", "pos": "WR", "rank": 148.6, "pos_rank": 56, "std": 18.8, "hist": 4.3, "est": 5.5, "low": 4, "high": 6, "apps": 5, "tier": 5}, {"name": "Rachaad White", "pos": "RB", "rank": 181.1, "pos_rank": 41, "std": 20.0, "hist": 3.4, "est": 5.4, "low": 4, "high": 6, "apps": 5, "tier": 5}, {"name": "Dylan Sampson", "pos": "RB", "rank": 187.1, "pos_rank": 43, "std": 15.0, "hist": 4.2, "est": 5.3, "low": 4, "high": 6, "apps": 5, "tier": 5}, {"name": "Tyjae Spears", "pos": "RB", "rank": 192.2, "pos_rank": 44, "std": 24.6, "hist": 5.2, "est": 5.2, "low": 4, "high": 5, "apps": 5, "tier": 5}, {"name": "Jordan Mason", "pos": "RB", "rank": 184.8, "pos_rank": 42, "std": 13.7, "hist": 3.4, "est": 5.2, "low": 4, "high": 5, "apps": 5, "tier": 5}, {"name": "Anthony Richardson", "pos": "QB", "rank": 168.2, "pos_rank": 32, "std": 37.0, "hist": 2.8, "est": 5.2, "low": 4, "high": 5, "apps": 5, "tier": 5}, {"name": "Jacoby Brissett", "pos": "QB", "rank": 175.6, "pos_rank": 34, "std": 47.4, "hist": 3.5, "est": 5.1, "low": 4, "high": 5, "apps": 5, "tier": 5}, {"name": "Justin Fields", "pos": "QB", "rank": 168.3, "pos_rank": 33, "std": 33.7, "hist": 2.6, "est": 5.1, "low": 4, "high": 5, "apps": 5, "tier": 5}, {"name": "Hunter Henry", "pos": "TE", "rank": 184.7, "pos_rank": 25, "std": 16.8, "hist": 6.0, "est": 4.9, "low": 4, "high": 5, "apps": 5, "tier": 5}, {"name": "Deebo Samuel", "pos": "WR", "rank": 160.9, "pos_rank": 58, "std": 21.8, "hist": 4.7, "est": 4.9, "low": 4, "high": 5, "apps": 5, "tier": 5}, {"name": "Theo Johnson", "pos": "TE", "rank": 184.1, "pos_rank": 24, "std": 30.4, "hist": 5.8, "est": 4.8, "low": 4, "high": 5, "apps": 5, "tier": 5}, {"name": "Jonathon Brooks", "pos": "RB", "rank": 194.6, "pos_rank": 46, "std": 36.4, "hist": 4.1, "est": 4.8, "low": 4, "high": 5, "apps": 5, "tier": 5}, {"name": "Chig Okonkwo", "pos": "TE", "rank": 173.8, "pos_rank": 22, "std": 23.8, "hist": 3.3, "est": 4.8, "low": 4, "high": 5, "apps": 5, "tier": 5}, {"name": "Troy Franklin", "pos": "WR", "rank": 167.5, "pos_rank": 64, "std": 28.8, "hist": 5.2, "est": 4.7, "low": 3, "high": 5, "apps": 5, "tier": 5}, {"name": "Kayshon Boutte", "pos": "WR", "rank": 163.3, "pos_rank": 59, "std": 26.5, "hist": 3.8, "est": 4.6, "low": 3, "high": 5, "apps": 5, "tier": 5}, {"name": "Kaleb Johnson", "pos": "RB", "rank": 203.7, "pos_rank": 48, "std": 20.0, "hist": 4.8, "est": 4.5, "low": 3, "high": 5, "apps": 5, "tier": 5}, {"name": "Jerry Jeudy", "pos": "WR", "rank": 163.6, "pos_rank": 61, "std": 22.0, "hist": 3.5, "est": 4.5, "low": 3, "high": 5, "apps": 5, "tier": 5}, {"name": "Aaron Rodgers", "pos": "QB", "rank": 181.6, "pos_rank": 35, "std": 34.7, "hist": 1.8, "est": 4.5, "low": 3, "high": 5, "apps": 5, "tier": 5}, {"name": "Jalen McMillan", "pos": "WR", "rank": 164.1, "pos_rank": 62, "std": 25.6, "hist": 3.4, "est": 4.4, "low": 3, "high": 5, "apps": 5, "tier": 5}, {"name": "Geno Smith", "pos": "QB", "rank": 190.3, "pos_rank": 36, "std": 57.1, "hist": 2.5, "est": 4.4, "low": 3, "high": 5, "apps": 5, "tier": 5}, {"name": "Travis Kelce", "pos": "TE", "rank": 181.8, "pos_rank": 23, "std": 12.3, "hist": 2.7, "est": 4.3, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "Jaylin Noel", "pos": "WR", "rank": 163.6, "pos_rank": 60, "std": 21.4, "hist": 2.8, "est": 4.3, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "Pat Bryant", "pos": "WR", "rank": 181.7, "pos_rank": 67, "std": 30.0, "hist": 6.0, "est": 4.2, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "Dalton Schultz", "pos": "TE", "rank": 194.5, "pos_rank": 27, "std": 16.8, "hist": 5.1, "est": 4.2, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "Elic Ayomanor", "pos": "WR", "rank": 176.8, "pos_rank": 66, "std": 22.6, "hist": 5.0, "est": 4.2, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "Aaron Jones", "pos": "RB", "rank": 210.2, "pos_rank": 50, "std": 16.9, "hist": 4.7, "est": 4.2, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "Tyreek Hill", "pos": "WR", "rank": 167.4, "pos_rank": 63, "std": 32.1, "hist": 3.2, "est": 4.2, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "Adonai Mitchell", "pos": "WR", "rank": 173.3, "pos_rank": 65, "std": 20.5, "hist": 3.5, "est": 4.0, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "Braelon Allen", "pos": "RB", "rank": 202.6, "pos_rank": 47, "std": 20.6, "hist": 2.3, "est": 4.0, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "Chimere Dike", "pos": "WR", "rank": 184.3, "pos_rank": 68, "std": 23.8, "hist": 5.1, "est": 3.9, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "James Conner", "pos": "RB", "rank": 216.3, "pos_rank": 53, "std": 27.9, "hist": 4.8, "est": 3.9, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "David Njoku", "pos": "TE", "rank": 193.3, "pos_rank": 26, "std": 12.7, "hist": 3.5, "est": 3.9, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "Isiah Pacheco", "pos": "RB", "rank": 207.7, "pos_rank": 49, "std": 23.8, "hist": 2.9, "est": 3.9, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "Tank Bigsby", "pos": "RB", "rank": 211.4, "pos_rank": 51, "std": 29.8, "hist": 2.6, "est": 3.6, "low": 3, "high": 4, "apps": 5, "tier": 5}, {"name": "Elijah Arroyo", "pos": "TE", "rank": 196.5, "pos_rank": 28, "std": 18.7, "hist": 2.3, "est": 3.5, "low": 2, "high": 4, "apps": 5, "tier": 5}, {"name": "Quinn Ewers", "pos": "QB", "rank": 214.8, "pos_rank": 37, "std": 59.6, "hist": 1.4, "est": 3.5, "low": 2, "high": 4, "apps": 5, "tier": 5}, {"name": "Kimani Vidal", "pos": "RB", "rank": 216.0, "pos_rank": 52, "std": 21.1, "hist": 2.9, "est": 3.4, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Gunnar Helm", "pos": "TE", "rank": 197.6, "pos_rank": 29, "std": 23.4, "hist": 2.5, "est": 3.4, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Cade Otton", "pos": "TE", "rank": 210.4, "pos_rank": 31, "std": 16.0, "hist": 4.2, "est": 3.3, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Jalen Milroe", "pos": "QB", "rank": 224.6, "pos_rank": 38, "std": 50.2, "hist": 1.6, "est": 3.3, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Tory Horton", "pos": "WR", "rank": 204.4, "pos_rank": 73, "std": 44.8, "hist": 5.8, "est": 3.2, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Devin Neal", "pos": "RB", "rank": 221.3, "pos_rank": 55, "std": 28.4, "hist": 3.0, "est": 3.2, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Emanuel Wilson", "pos": "RB", "rank": 216.3, "pos_rank": 54, "std": 33.8, "hist": 2.0, "est": 3.2, "low": 2, "high": 3, "apps": 4, "tier": 5}, {"name": "Keaton Mitchell", "pos": "RB", "rank": 229.5, "pos_rank": 60, "std": 41.7, "hist": 4.1, "est": 3.1, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Brian Robinson", "pos": "RB", "rank": 223.3, "pos_rank": 56, "std": 20.6, "hist": 2.8, "est": 3.1, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Jameis Winston", "pos": "QB", "rank": 226.8, "pos_rank": 39, "std": 72.8, "hist": 0.8, "est": 3.1, "low": 2, "high": 3, "apps": 4, "tier": 5}, {"name": "Kyle Williams", "pos": "WR", "rank": 196.8, "pos_rank": 69, "std": 34.5, "hist": 3.8, "est": 3.0, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Isaac TeSlaa", "pos": "WR", "rank": 197.5, "pos_rank": 70, "std": 31.2, "hist": 3.8, "est": 3.0, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Kirk Cousins", "pos": "QB", "rank": 252.5, "pos_rank": 42, "std": 61.7, "hist": 2.8, "est": 3.0, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Pat Freiermuth", "pos": "TE", "rank": 208.3, "pos_rank": 30, "std": 22.8, "hist": 1.8, "est": 2.9, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Joe Milton", "pos": "QB", "rank": 239.5, "pos_rank": 40, "std": 89.3, "hist": 1.2, "est": 2.9, "low": 2, "high": 3, "apps": 4, "tier": 5}, {"name": "Ray Davis", "pos": "RB", "rank": 229.4, "pos_rank": 59, "std": 25.8, "hist": 2.3, "est": 2.7, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Ollie Gordon", "pos": "RB", "rank": 226.4, "pos_rank": 57, "std": 23.9, "hist": 2.0, "est": 2.7, "low": 2, "high": 3, "apps": 5, "tier": 5}, {"name": "Tyson Bagent", "pos": "QB", "rank": 243.7, "pos_rank": 41, "std": 92.4, "hist": 0.8, "est": 2.7, "low": 2, "high": 3, "apps": 2, "tier": 5}, {"name": "Sean Tucker", "pos": "RB", "rank": 229.3, "pos_rank": 58, "std": 24.5, "hist": 1.7, "est": 2.5, "low": 2, "high": 2, "apps": 5, "tier": 5}, {"name": "Marvin Mims", "pos": "WR", "rank": 206.9, "pos_rank": 75, "std": 40.7, "hist": 2.6, "est": 2.4, "low": 2, "high": 2, "apps": 5, "tier": 5}, {"name": "Marcus Mariota", "pos": "QB", "rank": 258.3, "pos_rank": 44, "std": 64.4, "hist": 1.2, "est": 2.4, "low": 2, "high": 2, "apps": 4, "tier": 5}, {"name": "Keon Coleman", "pos": "WR", "rank": 200.7, "pos_rank": 72, "std": 29.2, "hist": 1.8, "est": 2.4, "low": 2, "high": 2, "apps": 5, "tier": 5}, {"name": "Will Howard", "pos": "QB", "rank": 255.0, "pos_rank": 43, "std": 50.0, "hist": 0.9, "est": 2.4, "low": 2, "high": 2, "apps": 5, "tier": 5}, {"name": "Jaylen Wright", "pos": "RB", "rank": 233.2, "pos_rank": 62, "std": 27.9, "hist": 1.4, "est": 2.4, "low": 2, "high": 2, "apps": 5, "tier": 5}, {"name": "Darnell Mooney", "pos": "WR", "rank": 198.2, "pos_rank": 71, "std": 25.1, "hist": 1.4, "est": 2.4, "low": 2, "high": 2, "apps": 5, "tier": 5}, {"name": "Chris Rodriguez", "pos": "RB", "rank": 232.9, "pos_rank": 61, "std": 39.4, "hist": 1.4, "est": 2.4, "low": 2, "high": 2, "apps": 5, "tier": 5}, {"name": "Jake Tonges", "pos": "TE", "rank": 232.1, "pos_rank": 33, "std": 34.4, "hist": 3.7, "est": 2.3, "low": 1, "high": 2, "apps": 5, "tier": 5}, {"name": "Michael Mayer", "pos": "TE", "rank": 225.3, "pos_rank": 32, "std": 22.9, "hist": 2.6, "est": 2.3, "low": 1, "high": 2, "apps": 5, "tier": 5}, {"name": "Calvin Ridley", "pos": "WR", "rank": 206.6, "pos_rank": 74, "std": 42.4, "hist": 2.1, "est": 2.3, "low": 1, "high": 2, "apps": 5, "tier": 5}, {"name": "Russell Wilson", "pos": "QB", "rank": 264.7, "pos_rank": 45, "std": 73.5, "hist": 0.8, "est": 2.3, "low": 1, "high": 2, "apps": 5, "tier": 5}, {"name": "Tank Dell", "pos": "WR", "rank": 217.7, "pos_rank": 76, "std": 36.8, "hist": 3.1, "est": 2.1, "low": 1, "high": 2, "apps": 5, "tier": 5}, {"name": "Jaydon Blue", "pos": "RB", "rank": 254.7, "pos_rank": 68, "std": 31.6, "hist": 3.5, "est": 2.0, "low": 1, "high": 2, "apps": 5, "tier": 5}, {"name": "Kendre Miller", "pos": "RB", "rank": 247.9, "pos_rank": 63, "std": 34.2, "hist": 2.4, "est": 2.0, "low": 1, "high": 2, "apps": 5, "tier": 5}, {"name": "Spencer Rattler", "pos": "QB", "rank": 285.5, "pos_rank": 46, "std": 55.6, "hist": 1.2, "est": 2.0, "low": 1, "high": 2, "apps": 4, "tier": 5}, {"name": "Joe Mixon", "pos": "RB", "rank": 252.1, "pos_rank": 67, "std": 22.8, "hist": 2.6, "est": 1.9, "low": 1, "high": 2, "apps": 5, "tier": 5}, {"name": "Jack Bech", "pos": "WR", "rank": 221.2, "pos_rank": 79, "std": 19.6, "hist": 2.5, "est": 1.8, "low": 1, "high": 2, "apps": 5, "tier": 5}, {"name": "Brashard Smith", "pos": "RB", "rank": 251.2, "pos_rank": 66, "std": 25.7, "hist": 2.2, "est": 1.8, "low": 1, "high": 2, "apps": 5, "tier": 5}, {"name": "DJ Giddens", "pos": "RB", "rank": 248.0, "pos_rank": 64, "std": 22.6, "hist": 1.7, "est": 1.8, "low": 1, "high": 2, "apps": 5, "tier": 5}, {"name": "Tanner McKee", "pos": "QB", "rank": 291.0, "pos_rank": 47, "std": 94.1, "hist": 0.8, "est": 1.8, "low": 1, "high": 2, "apps": 3, "tier": 5}, {"name": "Najee Harris", "pos": "RB", "rank": 249.8, "pos_rank": 65, "std": 33.6, "hist": 1.6, "est": 1.7, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Tre Tucker", "pos": "WR", "rank": 228.2, "pos_rank": 81, "std": 23.8, "hist": 2.6, "est": 1.6, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Evan Engram", "pos": "TE", "rank": 245.1, "pos_rank": 35, "std": 24.5, "hist": 2.3, "est": 1.6, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Cole Kmet", "pos": "TE", "rank": 240.5, "pos_rank": 34, "std": 27.3, "hist": 1.6, "est": 1.6, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Rashod Bateman", "pos": "WR", "rank": 220.3, "pos_rank": 77, "std": 25.6, "hist": 1.5, "est": 1.6, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Jarrett Stidham", "pos": "QB", "rank": 306.5, "pos_rank": 48, "std": 97.5, "hist": 0.9, "est": 1.5, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Jalen Nailor", "pos": "WR", "rank": 220.7, "pos_rank": 78, "std": 36.6, "hist": 1.1, "est": 1.5, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Tez Johnson", "pos": "WR", "rank": 230.8, "pos_rank": 83, "std": 23.7, "hist": 2.2, "est": 1.4, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Colby Parkinson", "pos": "TE", "rank": 248.0, "pos_rank": 37, "std": 34.6, "hist": 2.0, "est": 1.4, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Isaiah Davis", "pos": "RB", "rank": 255.1, "pos_rank": 69, "std": 27.9, "hist": 1.2, "est": 1.4, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Malik Washington", "pos": "WR", "rank": 232.3, "pos_rank": 84, "std": 23.1, "hist": 2.0, "est": 1.3, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Cedric Tillman", "pos": "WR", "rank": 229.1, "pos_rank": 82, "std": 40.5, "hist": 1.7, "est": 1.3, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Marquise Brown", "pos": "WR", "rank": null, "pos_rank": 145, "std": 0.0, "hist": 1.6, "est": 1.3, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Dillon Gabriel", "pos": "QB", "rank": 319.3, "pos_rank": 49, "std": 22.5, "hist": 0.8, "est": 1.3, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Christian Kirk", "pos": "WR", "rank": 227.4, "pos_rank": 80, "std": 30.9, "hist": 1.2, "est": 1.3, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Darnell Washington", "pos": "TE", "rank": 247.2, "pos_rank": 36, "std": 39.7, "hist": 1.0, "est": 1.3, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Joe Flacco", "pos": "QB", "rank": 328.5, "pos_rank": 50, "std": 25.5, "hist": 1.0, "est": 1.2, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Jarquez Hunter", "pos": "RB", "rank": 260.2, "pos_rank": 70, "std": 25.6, "hist": 0.8, "est": 1.2, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Mike Gesicki", "pos": "TE", "rank": 268.9, "pos_rank": 41, "std": 26.3, "hist": 2.6, "est": 1.1, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Will Levis", "pos": "QB", "rank": 339.0, "pos_rank": 52, "std": 53.0, "hist": 1.0, "est": 1.1, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Gardner Minshew", "pos": "QB", "rank": 337.3, "pos_rank": 51, "std": 121.1, "hist": 0.8, "est": 1.1, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Ben Sinnott", "pos": "TE", "rank": 253.9, "pos_rank": 38, "std": 46.8, "hist": 1.2, "est": 1.1, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Ja'Tavion Sanders", "pos": "TE", "rank": 264.0, "pos_rank": 40, "std": 40.7, "hist": 2.3, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Noah Fant", "pos": "TE", "rank": 282.3, "pos_rank": 42, "std": 35.8, "hist": 1.9, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Noah Gray", "pos": "TE", "rank": 283.6, "pos_rank": 44, "std": 40.1, "hist": 2.0, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Riley Leonard", "pos": "QB", "rank": 367.5, "pos_rank": 55, "std": 82.5, "hist": 1.7, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "KaVontae Turpin", "pos": "WR", "rank": 337.0, "pos_rank": 131, "std": 23.7, "hist": 2.0, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Keenan Allen", "pos": "WR", "rank": 244.3, "pos_rank": 88, "std": 31.1, "hist": 1.9, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Xavier Legette", "pos": "WR", "rank": 239.5, "pos_rank": 85, "std": 33.2, "hist": 1.5, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Deshaun Watson", "pos": "QB", "rank": 389.5, "pos_rank": 60, "std": 64.5, "hist": 1.5, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "LeQuint Allen", "pos": "RB", "rank": 279.8, "pos_rank": 76, "std": 19.6, "hist": 1.6, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Luke McCaffrey", "pos": "WR", "rank": 283.0, "pos_rank": 106, "std": 21.8, "hist": 1.6, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Davis Mills", "pos": "QB", "rank": 372.5, "pos_rank": 57, "std": 104.5, "hist": 1.2, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Isaiah Bond", "pos": "WR", "rank": 251.2, "pos_rank": 91, "std": 34.2, "hist": 1.6, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Jonnu Smith", "pos": "TE", "rank": 282.7, "pos_rank": 43, "std": 42.4, "hist": 1.4, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Tyrod Taylor", "pos": "QB", "rank": 358.0, "pos_rank": 54, "std": 0.0, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "MarShawn Lloyd", "pos": "RB", "rank": 287.6, "pos_rank": 84, "std": 26.6, "hist": 1.3, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Zach Ertz", "pos": "TE", "rank": 300.7, "pos_rank": 49, "std": 28.0, "hist": 1.2, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "DeMario Douglas", "pos": "WR", "rank": 240.3, "pos_rank": 87, "std": 28.9, "hist": 1.1, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Andrei Iosivas", "pos": "WR", "rank": 269.2, "pos_rank": 98, "std": 23.5, "hist": 1.2, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Darren Waller", "pos": "TE", "rank": 312.2, "pos_rank": 51, "std": 43.8, "hist": 1.2, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Kenny Pickett", "pos": "QB", "rank": 353.0, "pos_rank": 53, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Austin Ekeler", "pos": "RB", "rank": 296.3, "pos_rank": 87, "std": 49.1, "hist": 1.2, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Dontayvion Wicks", "pos": "WR", "rank": 246.8, "pos_rank": 90, "std": 41.9, "hist": 1.2, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Charlie Jones", "pos": "WR", "rank": null, "pos_rank": 146, "std": 0.0, "hist": 1.2, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Jordan James", "pos": "RB", "rank": 266.9, "pos_rank": 71, "std": 32.5, "hist": 1.0, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Samaje Perine", "pos": "RB", "rank": 292.4, "pos_rank": 85, "std": 38.9, "hist": 1.1, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Will Shipley", "pos": "RB", "rank": 280.9, "pos_rank": 78, "std": 20.1, "hist": 1.2, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Roschon Johnson", "pos": "RB", "rank": 311.5, "pos_rank": 91, "std": 31.8, "hist": 1.2, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Mitchell Evans", "pos": "TE", "rank": 317.2, "pos_rank": 52, "std": 47.8, "hist": 1.1, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Zonovan Knight", "pos": "RB", "rank": null, "pos_rank": 104, "std": 0.0, "hist": 1.1, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Mason Rudolph", "pos": "QB", "rank": 368.0, "pos_rank": 56, "std": 14.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Greg Dulcich", "pos": "TE", "rank": 257.3, "pos_rank": 39, "std": 41.1, "hist": 1.0, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Carson Wentz", "pos": "QB", "rank": 382.0, "pos_rank": 59, "std": 0.0, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Audric Estime", "pos": "RB", "rank": 282.1, "pos_rank": 80, "std": 27.4, "hist": 1.2, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Dont'e Thornton", "pos": "WR", "rank": 274.2, "pos_rank": 100, "std": 34.3, "hist": 1.1, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Elijah Higgins", "pos": "TE", "rank": 341.2, "pos_rank": 56, "std": 31.6, "hist": 1.1, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Cooper Kupp", "pos": "WR", "rank": 239.8, "pos_rank": 86, "std": 35.5, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Luke Musgrave", "pos": "TE", "rank": 289.8, "pos_rank": 47, "std": 34.3, "hist": 1.0, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Elijah Mitchell", "pos": "RB", "rank": 405.0, "pos_rank": 100, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Devaughn Vele", "pos": "WR", "rank": 255.9, "pos_rank": 94, "std": 29.6, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Dameon Pierce", "pos": "RB", "rank": 342.0, "pos_rank": 96, "std": 38.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Treylon Burks", "pos": "WR", "rank": 309.8, "pos_rank": 115, "std": 19.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Damien Martinez", "pos": "RB", "rank": 340.3, "pos_rank": 95, "std": 44.9, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Tai Felton", "pos": "WR", "rank": 310.5, "pos_rank": 117, "std": 29.6, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Trey Lance", "pos": "QB", "rank": 417.5, "pos_rank": 63, "std": 38.5, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Daniel Bellinger", "pos": "TE", "rank": 365.0, "pos_rank": 62, "std": 22.9, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Darius Slayton", "pos": "WR", "rank": 252.9, "pos_rank": 92, "std": 28.6, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Trevor Etienne", "pos": "RB", "rank": 273.8, "pos_rank": 72, "std": 27.1, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Dawson Knox", "pos": "TE", "rank": 286.0, "pos_rank": 45, "std": 25.0, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "DeAndre Hopkins", "pos": "WR", "rank": 298.0, "pos_rank": 109, "std": 41.2, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Demarcus Robinson", "pos": "WR", "rank": 333.8, "pos_rank": 129, "std": 48.2, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Devin Duvernay", "pos": "WR", "rank": null, "pos_rank": 147, "std": 0.0, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Taysom Hill", "pos": "TE", "rank": 318.0, "pos_rank": 53, "std": 65.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Devin Singletary", "pos": "RB", "rank": 277.7, "pos_rank": 73, "std": 17.1, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Devontez Walker", "pos": "WR", "rank": 318.0, "pos_rank": 121, "std": 48.8, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Diontae Johnson", "pos": "WR", "rank": 340.5, "pos_rank": 133, "std": 110.5, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Curtis Samuel", "pos": "WR", "rank": 336.0, "pos_rank": 130, "std": 78.0, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Titus Swen", "pos": "RB", "rank": null, "pos_rank": 105, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Emari Demercado", "pos": "RB", "rank": 327.0, "pos_rank": 94, "std": 43.1, "hist": 0.7, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Donovan Edwards", "pos": "RB", "rank": null, "pos_rank": 106, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Elijah Moore", "pos": "WR", "rank": 310.6, "pos_rank": 118, "std": 40.1, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Drew Lock", "pos": "QB", "rank": null, "pos_rank": 67, "std": 0.0, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Dyami Brown", "pos": "WR", "rank": 309.0, "pos_rank": 113, "std": 25.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Efton Chism", "pos": "WR", "rank": 329.5, "pos_rank": 125, "std": 22.3, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Tommy Tremble", "pos": "TE", "rank": 350.0, "pos_rank": 59, "std": 38.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Tutu Atwell", "pos": "WR", "rank": 309.0, "pos_rank": 114, "std": 13.7, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Erick All", "pos": "TE", "rank": 307.8, "pos_rank": 50, "std": 34.1, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Ty Johnson", "pos": "RB", "rank": 316.0, "pos_rank": 92, "std": 29.9, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Adam Thielen", "pos": "WR", "rank": null, "pos_rank": 148, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Zamir White", "pos": "RB", "rank": 407.0, "pos_rank": 101, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Zack Moss", "pos": "RB", "rank": 440.0, "pos_rank": 103, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Zach Wilson", "pos": "QB", "rank": null, "pos_rank": 68, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Aidan O'Connell", "pos": "QB", "rank": 392.5, "pos_rank": 61, "std": 8.5, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Allen Lazard", "pos": "WR", "rank": 432.5, "pos_rank": 139, "std": 67.5, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Amari Cooper", "pos": "WR", "rank": null, "pos_rank": 149, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Xavier Restrepo", "pos": "WR", "rank": 310.2, "pos_rank": 116, "std": 27.7, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Anthony Sherman", "pos": "RB", "rank": null, "pos_rank": 107, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Xavier Hutchinson", "pos": "WR", "rank": 312.0, "pos_rank": 119, "std": 31.2, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Antonio Gibson", "pos": "RB", "rank": 278.2, "pos_rank": 74, "std": 28.4, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Arian Smith", "pos": "WR", "rank": 445.0, "pos_rank": 140, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Austin Hooper", "pos": "TE", "rank": 344.0, "pos_rank": 57, "std": 53.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Will Dissly", "pos": "TE", "rank": 348.5, "pos_rank": 58, "std": 74.5, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Brandin Cooks", "pos": "WR", "rank": 320.7, "pos_rank": 123, "std": 55.9, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Brevin Jordan", "pos": "TE", "rank": 376.0, "pos_rank": 63, "std": 112.0, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Bryce Ford-Wheaton", "pos": "WR", "rank": null, "pos_rank": 150, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "C.J. Johnson", "pos": "WR", "rank": null, "pos_rank": 151, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Cade Stover", "pos": "TE", "rank": 289.4, "pos_rank": 46, "std": 36.7, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Tyquan Thornton", "pos": "WR", "rank": 276.7, "pos_rank": 101, "std": 28.6, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Calvin Austin", "pos": "WR", "rank": 281.7, "pos_rank": 105, "std": 29.5, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Cam Akers", "pos": "RB", "rank": 374.0, "pos_rank": 99, "std": 69.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Tyler Lockett", "pos": "WR", "rank": 304.3, "pos_rank": 112, "std": 48.2, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Tyler Huntley", "pos": "QB", "rank": 481.0, "pos_rank": 66, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Tyler Higbee", "pos": "TE", "rank": 294.3, "pos_rank": 48, "std": 40.7, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Tyler Conklin", "pos": "TE", "rank": 324.5, "pos_rank": 54, "std": 43.5, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Connor Heyward", "pos": "TE", "rank": null, "pos_rank": 66, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Tahj Brooks", "pos": "RB", "rank": 282.1, "pos_rank": 79, "std": 18.4, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Gabe Davis", "pos": "WR", "rank": 329.7, "pos_rank": 126, "std": 71.7, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Marquez Valdes-Scantling", "pos": "WR", "rank": 424.0, "pos_rank": 138, "std": 0.0, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Nick Westbrook-Ikhine", "pos": "WR", "rank": 339.5, "pos_rank": 132, "std": 44.2, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "A.J. Dillon", "pos": "RB", "rank": null, "pos_rank": 108, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Phil Mafah", "pos": "RB", "rank": 286.4, "pos_rank": 83, "std": 53.4, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "John Metchie", "pos": "WR", "rank": 278.3, "pos_rank": 102, "std": 15.8, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Jonathan Mingo", "pos": "WR", "rank": 485.0, "pos_rank": 141, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Jordan Whittington", "pos": "WR", "rank": 298.1, "pos_rank": 110, "std": 15.7, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Joshua Dobbs", "pos": "QB", "rank": 420.5, "pos_rank": 64, "std": 37.5, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Joshua Palmer", "pos": "WR", "rank": 272.0, "pos_rank": 99, "std": 42.2, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "JuJu Smith-Schuster", "pos": "WR", "rank": 408.0, "pos_rank": 137, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Justice Hill", "pos": "RB", "rank": 303.6, "pos_rank": 88, "std": 23.4, "hist": 1.0, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Olamide Zaccheaus", "pos": "WR", "rank": 330.0, "pos_rank": 127, "std": 22.6, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Kalel Mullings", "pos": "RB", "rank": 421.5, "pos_rank": 102, "std": 81.5, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Kalif Raymond", "pos": "WR", "rank": 408.0, "pos_rank": 136, "std": 47.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Kameron Johnson", "pos": "WR", "rank": 350.0, "pos_rank": 135, "std": 0.0, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Nick Nash", "pos": "WR", "rank": 493.0, "pos_rank": 142, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Jerome Ford", "pos": "RB", "rank": 282.4, "pos_rank": 81, "std": 21.6, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Nick Chubb", "pos": "RB", "rank": 285.3, "pos_rank": 82, "std": 28.4, "hist": 1.1, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Kareem Hunt", "pos": "RB", "rank": 280.3, "pos_rank": 77, "std": 20.7, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Myles Price", "pos": "WR", "rank": null, "pos_rank": 152, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Mitchell Trubisky", "pos": "QB", "rank": 457.0, "pos_rank": 65, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "KeAndre Lambert-Smith", "pos": "WR", "rank": 290.8, "pos_rank": 108, "std": 28.9, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Miles Sanders", "pos": "RB", "rank": 319.0, "pos_rank": 93, "std": 24.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Kendrick Bourne", "pos": "WR", "rank": 289.5, "pos_rank": 107, "std": 22.1, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Khalil Herbert", "pos": "RB", "rank": 346.5, "pos_rank": 97, "std": 46.5, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Konata Mumpfield", "pos": "WR", "rank": 266.9, "pos_rank": 96, "std": 37.2, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Lew Nichols", "pos": "RB", "rank": null, "pos_rank": 109, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Luke Schoonmaker", "pos": "TE", "rank": 360.0, "pos_rank": 61, "std": 38.6, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Michael Carter", "pos": "RB", "rank": 295.3, "pos_rank": 86, "std": 29.8, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Luke Stocker", "pos": "TE", "rank": null, "pos_rank": 67, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Jimmy Garoppolo", "pos": "QB", "rank": 416.0, "pos_rank": 62, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Jermaine Burton", "pos": "WR", "rank": 321.7, "pos_rank": 124, "std": 73.5, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Grant Calcaterra", "pos": "TE", "rank": 388.3, "pos_rank": 64, "std": 42.1, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Jacob Copeland", "pos": "WR", "rank": null, "pos_rank": 153, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Skyy Moore", "pos": "WR", "rank": null, "pos_rank": 154, "std": 0.0, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Greg Dortch", "pos": "WR", "rank": 342.0, "pos_rank": 134, "std": 34.1, "hist": 1.0, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Savion Williams", "pos": "WR", "rank": 300.3, "pos_rank": 111, "std": 12.1, "hist": 1.0, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Henry Ruggs", "pos": "WR", "rank": null, "pos_rank": 155, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Hunter Renfrow", "pos": "WR", "rank": null, "pos_rank": 156, "std": 0.0, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Isaac Guerendo", "pos": "RB", "rank": 278.4, "pos_rank": 75, "std": 28.4, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Sam James", "pos": "WR", "rank": null, "pos_rank": 157, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Sam Howell", "pos": "QB", "rank": 381.0, "pos_rank": 58, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Isaiah Williams", "pos": "WR", "rank": 511.0, "pos_rank": 143, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Ryan Flournoy", "pos": "WR", "rank": 245.9, "pos_rank": 89, "std": 43.2, "hist": 0.7, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Ja'Corey Brooks", "pos": "WR", "rank": null, "pos_rank": 158, "std": 0.0, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Ja'Lynn Polk", "pos": "WR", "rank": 280.4, "pos_rank": 103, "std": 43.7, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Jackson Hawes", "pos": "TE", "rank": 462.0, "pos_rank": 65, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Roman Wilson", "pos": "WR", "rank": 268.7, "pos_rank": 97, "std": 27.5, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Jeremy Ruckert", "pos": "TE", "rank": 357.3, "pos_rank": 60, "std": 45.5, "hist": 0.9, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Jadon Haselwood", "pos": "WR", "rank": null, "pos_rank": 159, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}, {"name": "Jahan Dotson", "pos": "WR", "rank": 318.7, "pos_rank": 122, "std": 17.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Ricky White", "pos": "WR", "rank": 513.0, "pos_rank": 144, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Jake Browning", "pos": "QB", "rank": null, "pos_rank": 69, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Jaleel McLaughlin", "pos": "RB", "rank": 304.4, "pos_rank": 89, "std": 20.2, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Jalen Royals", "pos": "WR", "rank": 260.3, "pos_rank": 95, "std": 29.7, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Jalen Tolbert", "pos": "WR", "rank": 255.3, "pos_rank": 93, "std": 39.2, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Jalin Hyatt", "pos": "WR", "rank": 331.0, "pos_rank": 128, "std": 31.1, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Jared Wiley", "pos": "TE", "rank": 327.0, "pos_rank": 55, "std": 88.5, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 1, "tier": 5}, {"name": "Rakim Jarrett", "pos": "WR", "rank": null, "pos_rank": 160, "std": 0.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Raheim Sanders", "pos": "RB", "rank": 311.0, "pos_rank": 90, "std": 36.0, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 3, "tier": 5}, {"name": "Raheem Mostert", "pos": "RB", "rank": 373.5, "pos_rank": 98, "std": 24.5, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 2, "tier": 5}, {"name": "Jaylin Lane", "pos": "WR", "rank": 281.2, "pos_rank": 104, "std": 25.9, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 5, "tier": 5}, {"name": "Jimmy Horn", "pos": "WR", "rank": 314.8, "pos_rank": 120, "std": 37.4, "hist": 0.8, "est": 1.0, "low": 1, "high": 1, "apps": 4, "tier": 5}];
+const ALL_PICKS   = [{"pick_label": "1.01", "avg_adj_price": 33.858000000000004, "n_drafts": 5, "target_price": 33.9, "range": "$32–$37"}, {"pick_label": "1.02", "avg_adj_price": 26.598000000000003, "n_drafts": 5, "target_price": 26.6, "range": "$24–$29"}, {"pick_label": "1.03", "avg_adj_price": 23.74, "n_drafts": 5, "target_price": 23.7, "range": "$21–$27"}, {"pick_label": "1.04", "avg_adj_price": 20.076, "n_drafts": 5, "target_price": 20.1, "range": "$19–$20"}, {"pick_label": "1.05", "avg_adj_price": 16.146, "n_drafts": 5, "target_price": 16.1, "range": "$16–$18"}, {"pick_label": "1.06", "avg_adj_price": 16.89, "n_drafts": 5, "target_price": 16.9, "range": "$15–$19"}, {"pick_label": "1.07", "avg_adj_price": 14.974, "n_drafts": 5, "target_price": 15.0, "range": "$13–$18"}, {"pick_label": "1.08", "avg_adj_price": 12.9, "n_drafts": 5, "target_price": 12.9, "range": "$11–$13"}, {"pick_label": "1.09", "avg_adj_price": 12.032, "n_drafts": 5, "target_price": 12.0, "range": "$11–$15"}, {"pick_label": "1.1", "avg_adj_price": 11.674, "n_drafts": 5, "target_price": 11.7, "range": "$10–$14"}, {"pick_label": "1.11", "avg_adj_price": 13.1, "n_drafts": 2, "target_price": 13.1, "range": "$13–$13"}, {"pick_label": "1.12", "avg_adj_price": 13.1, "n_drafts": 2, "target_price": 13.1, "range": "$13–$13"}, {"pick_label": "2.01", "avg_adj_price": 9.994, "n_drafts": 5, "target_price": 10.0, "range": "$8–$11"}, {"pick_label": "2.02", "avg_adj_price": 9.372, "n_drafts": 5, "target_price": 9.4, "range": "$8–$10"}, {"pick_label": "2.03", "avg_adj_price": 8.482000000000001, "n_drafts": 5, "target_price": 8.5, "range": "$7–$10"}, {"pick_label": "2.04", "avg_adj_price": 8.036, "n_drafts": 5, "target_price": 8.0, "range": "$7–$10"}, {"pick_label": "2.05", "avg_adj_price": 6.828, "n_drafts": 5, "target_price": 6.8, "range": "$5–$9"}, {"pick_label": "2.06", "avg_adj_price": 6.18, "n_drafts": 5, "target_price": 6.2, "range": "$5–$7"}, {"pick_label": "2.07", "avg_adj_price": 5.598, "n_drafts": 5, "target_price": 5.6, "range": "$5–$6"}, {"pick_label": "2.08", "avg_adj_price": 5.4159999999999995, "n_drafts": 5, "target_price": 5.4, "range": "$4–$5"}, {"pick_label": "2.09", "avg_adj_price": 4.351999999999999, "n_drafts": 5, "target_price": 4.4, "range": "$4–$5"}, {"pick_label": "2.1", "avg_adj_price": 4.2219999999999995, "n_drafts": 5, "target_price": 4.2, "range": "$4–$5"}, {"pick_label": "2.11", "avg_adj_price": 4.775, "n_drafts": 2, "target_price": 4.8, "range": "$5–$5"}, {"pick_label": "2.12", "avg_adj_price": 5.205, "n_drafts": 2, "target_price": 5.2, "range": "$5–$6"}, {"pick_label": "3.01", "avg_adj_price": 3.918, "n_drafts": 5, "target_price": 3.9, "range": "$3–$5"}, {"pick_label": "3.02", "avg_adj_price": 3.642, "n_drafts": 5, "target_price": 3.6, "range": "$3–$4"}, {"pick_label": "3.03", "avg_adj_price": 3.066, "n_drafts": 5, "target_price": 3.1, "range": "$3–$3"}, {"pick_label": "3.04", "avg_adj_price": 2.276, "n_drafts": 5, "target_price": 2.3, "range": "$2–$3"}, {"pick_label": "3.05", "avg_adj_price": 2.008, "n_drafts": 5, "target_price": 2.0, "range": "$1–$3"}, {"pick_label": "3.06", "avg_adj_price": 1.858, "n_drafts": 5, "target_price": 1.9, "range": "$1–$2"}, {"pick_label": "3.07", "avg_adj_price": 1.6960000000000002, "n_drafts": 5, "target_price": 1.7, "range": "$1–$2"}, {"pick_label": "3.08", "avg_adj_price": 1.408, "n_drafts": 5, "target_price": 1.4, "range": "$1–$1"}, {"pick_label": "3.09", "avg_adj_price": 1.56, "n_drafts": 5, "target_price": 1.6, "range": "$1–$2"}, {"pick_label": "3.1", "avg_adj_price": 1.498, "n_drafts": 5, "target_price": 1.5, "range": "$1–$2"}, {"pick_label": "3.11", "avg_adj_price": 1.96, "n_drafts": 2, "target_price": 2.0, "range": "$2–$2"}, {"pick_label": "3.12", "avg_adj_price": 2.39, "n_drafts": 2, "target_price": 2.4, "range": "$2–$2"}, {"pick_label": "4.01", "avg_adj_price": 1.08, "n_drafts": 5, "target_price": 1.1, "range": "$1–$2"}, {"pick_label": "4.02", "avg_adj_price": 1.395, "n_drafts": 4, "target_price": 1.4, "range": "$1–$2"}, {"pick_label": "4.03", "avg_adj_price": 1.0766666666666669, "n_drafts": 3, "target_price": 1.1, "range": "$1–$1"}, {"pick_label": "4.04", "avg_adj_price": 1.6166666666666665, "n_drafts": 3, "target_price": 1.6, "range": "$1–$2"}, {"pick_label": "4.05", "avg_adj_price": 1.33, "n_drafts": 3, "target_price": 1.3, "range": "$1–$2"}, {"pick_label": "4.06", "avg_adj_price": 1.33, "n_drafts": 3, "target_price": 1.3, "range": "$1–$2"}, {"pick_label": "4.07", "avg_adj_price": 1.6166666666666665, "n_drafts": 3, "target_price": 1.6, "range": "$1–$2"}, {"pick_label": "4.08", "avg_adj_price": 1.3633333333333333, "n_drafts": 3, "target_price": 1.4, "range": "$1–$2"}, {"pick_label": "4.09", "avg_adj_price": 1.6166666666666665, "n_drafts": 3, "target_price": 1.6, "range": "$1–$2"}, {"pick_label": "4.1", "avg_adj_price": 1.33, "n_drafts": 3, "target_price": 1.3, "range": "$1–$2"}, {"pick_label": "4.11", "avg_adj_price": 1.72, "n_drafts": 1, "target_price": 1.7, "range": "$2–$2"}, {"pick_label": "4.12", "avg_adj_price": 2.58, "n_drafts": 1, "target_price": 2.6, "range": "$3–$3"}, {"pick_label": "5.01", "avg_adj_price": 0.79, "n_drafts": 3, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "5.02", "avg_adj_price": 0.755, "n_drafts": 2, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "5.03", "avg_adj_price": 0.755, "n_drafts": 2, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "5.04", "avg_adj_price": 0.755, "n_drafts": 2, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "5.05", "avg_adj_price": 0.755, "n_drafts": 2, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "5.06", "avg_adj_price": 0.755, "n_drafts": 2, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "5.07", "avg_adj_price": 0.755, "n_drafts": 2, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "5.08", "avg_adj_price": 0.755, "n_drafts": 2, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "5.09", "avg_adj_price": 0.755, "n_drafts": 2, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "5.1", "avg_adj_price": 0.755, "n_drafts": 2, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "6.01", "avg_adj_price": 0.755, "n_drafts": 2, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "6.02", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "6.03", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "6.04", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "6.05", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "6.06", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "6.07", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "6.08", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "6.09", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "6.1", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "7.01", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "7.02", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "7.03", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "7.04", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "7.05", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "7.06", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "7.07", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "7.08", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "7.09", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "7.1", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "8.01", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "8.02", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "8.03", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "8.04", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "8.05", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "8.06", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "8.07", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "8.08", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "8.09", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "8.1", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "9.01", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "9.02", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "9.03", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}, {"pick_label": "9.04", "avg_adj_price": 0.76, "n_drafts": 1, "target_price": 0.8, "range": "$1–$1"}];
+const BUDGET      = 300;
+const ROSTER_SIZE = 30;
+const N_TEAMS     = 12;
+const SLOTS_DEF   = [{"id": "qb1", "label": "QB", "pos": ["QB"]}, {"id": "rb1", "label": "RB", "pos": ["RB"]}, {"id": "rb2", "label": "RB", "pos": ["RB"]}, {"id": "wr1", "label": "WR", "pos": ["WR"]}, {"id": "wr2", "label": "WR", "pos": ["WR"]}, {"id": "wr3", "label": "WR", "pos": ["WR"]}, {"id": "te1", "label": "TE", "pos": ["TE"]}, {"id": "fl1", "label": "FLEX", "pos": ["RB", "WR", "TE"]}, {"id": "fl2", "label": "FLEX", "pos": ["RB", "WR", "TE"]}, {"id": "sf1", "label": "SF", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn1", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn2", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn3", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn4", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn5", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn6", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn7", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn8", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn9", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn10", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn11", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn12", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn13", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn14", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn15", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn16", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn17", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn18", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn19", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}, {"id": "bn20", "label": "BN", "pos": ["QB", "RB", "WR", "TE"]}];
+const MY_TEAM     = 0;  // index of "your" team
+
+// ── State (persisted in localStorage) ────────────────────────────────────────
+const STORE_KEY = 'dynastyDraftState_v3';
+let state;
+
+function defaultState() {
+  return {
+    teams: Array.from({length: N_TEAMS}, (_, i) => ({
+      name: i === 0 ? 'YOU' : `Team ${i+1}`,
+      picks: [],    // {playerIdx, price, slotId}
+    })),
+    draftedSet:   {},   // playerIdx -> teamIdx  (fully drafted via modal)
+    quickDrafted: {},   // playerIdx -> true      (quick-removed, no team/price)
+  };
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      // Migrate old saves that predate quickDrafted
+      if (!s.quickDrafted) s.quickDrafted = {};
+      return s;
+    }
+  } catch(e) {}
+  return defaultState();
+}
+
+function saveState() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+}
+
+function resetDraft() {
+  if (!confirm('Reset entire draft? This cannot be undone.')) return;
+  state = defaultState();
+  saveState();
+  render();
+  showToast('Draft reset.');
+}
+
+state = loadState();
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+const POS_COLORS = {QB:'#ff4d4d',RB:'#00e676',WR:'#40b4ff',TE:'#f5c518'};
+const TIER_LABELS = ['','ELITE','SOLID','VALUE','DEEP','SPEC'];
+let showAllPicks = false;
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// ── Rookie picks as pseudo-players ────────────────────────────────────────────
+// Add pick placeholders to the player list so they can be auctioned
+const PICK_PLAYERS = ALL_PICKS
+  .filter(p => parseFloat(p.target_price) >= 1)
+  .map((p, i) => ({
+    name: `Pick ${p.pick_label}`,
+    pos: 'K',
+    rank: null,
+    std: 0,
+    hist: parseFloat(p.target_price)||1,
+    est: parseFloat(p.target_price)||1,
+    low: parseInt(String(p.range||'1').match(/\$(\d+)/)?.[1]||'1'),
+    high: parseInt(String(p.range||'1').match(/–\$(\d+)/)?.[1]||'1'),
+    apps: p.n_drafts||1,
+    tier: 3,
+    _pickIdx: i,
+  }));
+
+const FULL_LIST = [...ALL_PLAYERS, ...PICK_PLAYERS];
+
+// ── My team stats ─────────────────────────────────────────────────────────────
+function myTeamSpent() {
+  return state.teams[MY_TEAM].picks.reduce((s, p) => s + p.price, 0);
+}
+function myTeamSlotsFilled() {
+  return state.teams[MY_TEAM].picks.length;
+}
+function myTeamRemaining() {
+  return BUDGET - myTeamSpent();
+}
+function myTeamMaxBid() {
+  const slotsLeft = ROSTER_SIZE - myTeamSlotsFilled();
+  return Math.max(1, myTeamRemaining() - (slotsLeft - 1));
+}
+
+// ── Topbar stats ──────────────────────────────────────────────────────────────
+function updateTopbar() {
+  const spent = myTeamSpent();
+  const rem   = myTeamRemaining();
+  const max   = myTeamMaxBid();
+  const total = Object.keys(state.draftedSet).length + Object.keys(state.quickDrafted).length;
+  document.getElementById('stat-remaining').textContent = '$' + rem;
+  document.getElementById('stat-spent').textContent     = '$' + spent;
+  document.getElementById('stat-slots').textContent     = ROSTER_SIZE - myTeamSlotsFilled();
+  document.getElementById('stat-maxbid').textContent    = '$' + max;
+  document.getElementById('stat-drafted').textContent   = total + ' player' + (total===1?'':'s');
+}
+
+// ── Budget bar ────────────────────────────────────────────────────────────────
+function updateBudgetBar() {
+  const spent = myTeamSpent();
+  const pct   = Math.min(spent / BUDGET * 100, 100);
+  const bar   = document.getElementById('b-bar');
+  const rem   = myTeamRemaining();
+  bar.style.width = pct + '%';
+  bar.className = 'budget-bar-fill' + (pct>85?' danger':pct>65?' warn':'');
+  document.getElementById('b-spent').textContent = '$' + spent;
+  document.getElementById('b-rem').textContent   = '$' + rem;
+  document.getElementById('slots-filled').textContent = myTeamSlotsFilled();
+}
+
+// ── Player board ──────────────────────────────────────────────────────────────
+let boardPos = 'ALL', boardSearch = '';
+
+function isAnyDrafted(idx) {
+  return (idx in state.draftedSet) || (idx in state.quickDrafted);
+}
+
+function renderBoard() {
+  const viewDrafted = boardPos === 'DRAFTED';
+
+  let list;
+  if (viewDrafted) {
+    // Show ALL drafted players (both quick and full), respecting search
+    list = FULL_LIST
+      .map((p, idx) => ({p, idx}))
+      .filter(({p, idx}) => {
+        if (!isAnyDrafted(idx)) return false;
+        if (boardSearch && !p.name.toLowerCase().includes(boardSearch)) return false;
+        return true;
+      });
+  } else {
+    // Show only available players, filtered by pos + search
+    list = FULL_LIST
+      .map((p, idx) => ({p, idx}))
+      .filter(({p, idx}) => {
+        if (isAnyDrafted(idx)) return false;
+        if (boardPos !== 'ALL' && p.pos !== boardPos) return false;
+        if (boardSearch && !p.name.toLowerCase().includes(boardSearch)) return false;
+        return true;
+      });
+  }
+
+  const availCount = FULL_LIST.filter((_, idx) => !isAnyDrafted(idx)).length;
+  document.getElementById('avail-count').textContent = viewDrafted
+    ? (Object.keys(state.draftedSet).length + Object.keys(state.quickDrafted).length) + ' drafted'
+    : availCount + ' remaining';
+
+  if (!list.length) {
+    document.getElementById('player-board').innerHTML =
+      `<div style="padding:24px;text-align:center;color:var(--dim)">${viewDrafted ? 'No drafted players yet.' : 'No players match the filter.'}</div>`;
+    return;
+  }
+
+  const html = list.map(({p, idx}) => {
+    const posCol   = p.pos === 'K' ? '#6b7280' : (POS_COLORS[p.pos] || '#888');
+    const rankStr  = p.rank ? p.rank.toFixed(0) : '—';
+    const posLabel = p.pos === 'K' ? 'PICK' : p.pos;
+    const posStyle = p.pos === 'K' ? 'background:rgba(107,114,128,.2);color:#9ca3af' : '';
+
+    if (viewDrafted) {
+      // ── Drafted row ──────────────────────────────────────────────────────
+      const isFullDraft = idx in state.draftedSet;
+      const isQuick     = idx in state.quickDrafted;
+      const teamIdx     = state.draftedSet[idx];
+      const teamName    = isFullDraft ? state.teams[teamIdx].name : '—';
+      const pick        = isFullDraft
+        ? state.teams[teamIdx].picks.find(pk => pk.playerIdx === idx)
+        : null;
+      const priceStr    = pick ? `$${pick.price}` : '<span style="color:var(--dim)">no price</span>';
+      const tagStr      = isFullDraft
+        ? `<span style="font-size:10px;color:var(--dim);font-family:var(--mono)">${teamName} · ${priceStr}</span>`
+        : `<span style="font-size:10px;color:var(--dim);font-style:italic">quick-removed</span>`;
+
+      return `<div class="player-row" style="background:rgba(255,68,68,.04)">
+        <div class="pr-pos ${p.pos}" style="min-width:38px;${posStyle}">${p.pos === 'K' ? 'PICK' : (p.pos_rank ? p.pos + p.pos_rank : p.pos)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="pr-name" title="${p.name}">${p.name}</div>
+          <div style="margin-top:1px">${tagStr}</div>
+        </div>
+        <div class="pr-rank" style="color:${posCol}">${rankStr}</div>
+        <div class="pr-est">$${p.est.toFixed(0)}</div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          ${isFullDraft
+            ? `<button class="draft-btn" style="border-color:var(--amber);color:var(--amber)" onclick="openModal(${idx}, 'edit')">EDIT</button>`
+            : `<button class="draft-btn" onclick="openModal(${idx}, 'assign')">DRAFT</button>`
+          }
+          <button class="draft-btn" style="border-color:rgba(255,68,68,.4);color:var(--red)" onclick="undraft(${idx})">UNDRAFT</button>
+        </div>
+      </div>`;
+    } else {
+      // ── Available row ────────────────────────────────────────────────────
+      const posLabel = p.pos === 'K' ? 'PICK' : (p.pos_rank ? p.pos + p.pos_rank : p.pos);
+      return `<div class="player-row" id="pr-${idx}">
+        <div class="pr-pos ${p.pos}" style="min-width:38px;${posStyle}">${posLabel}</div>
+        <div class="pr-name" title="${p.name}">${p.name}</div>
+        <div class="pr-rank" style="color:${posCol}">${rankStr}</div>
+        <div class="pr-est">$${p.est.toFixed(0)}</div>
+        <div class="pr-range">$${p.low}–$${p.high}</div>
+        <div class="pr-tier" title="Tier ${p.tier}: ${TIER_LABELS[p.tier]}">T${p.tier}</div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="draft-btn" onclick="openModal(${idx})">DRAFT</button>
+          <button class="draft-btn" style="border-color:rgba(255,68,68,.3);color:var(--red);padding:3px 7px" title="Quick-remove from board" onclick="quickDraft(${idx})">✕</button>
+        </div>
+      </div>`;
+    }
+  }).join('');
+
+  document.getElementById('player-board').innerHTML = html;
+}
+
+document.getElementById('dr-search').addEventListener('input', e => {
+  boardSearch = e.target.value.toLowerCase();
+  renderBoard();
+});
+document.querySelectorAll('.pos-btn[data-p]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pos-btn[data-p]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    boardPos = btn.dataset.p;
+    renderBoard();
+  });
+});
+
+// ── My roster ─────────────────────────────────────────────────────────────────
+function renderMyRoster() {
+  const myPicks = state.teams[MY_TEAM].picks;
+  const slotMap = {};
+  myPicks.forEach(pk => { if(pk.slotId) slotMap[pk.slotId] = pk; });
+
+  const groups = {
+    QB:   SLOTS_DEF.filter(s=>s.label==='QB'),
+    RB:   SLOTS_DEF.filter(s=>s.label==='RB'),
+    WR:   SLOTS_DEF.filter(s=>s.label==='WR'),
+    TE:   SLOTS_DEF.filter(s=>s.label==='TE'),
+    FLEX: SLOTS_DEF.filter(s=>s.label==='FLEX'),
+    SF:   SLOTS_DEF.filter(s=>s.label==='SF'),
+    BN:   SLOTS_DEF.filter(s=>s.label==='BN'),
+  };
+
+  let html = '';
+  Object.entries(groups).forEach(([grp, slots]) => {
+    html += `<div class="slot-group">
+      <div class="slot-group-header">${grp} (${slots.length} slot${slots.length>1?'s':''})</div>`;
+    slots.forEach(slot => {
+      const pk = slotMap[slot.id];
+      if (pk) {
+        const p = FULL_LIST[pk.playerIdx];
+        const est = p ? p.est : pk.price;
+        const diff = pk.price - est;
+        const cls  = diff > 3 ? 'over' : diff < -3 ? 'good' : 'fair';
+        const diffStr = diff > 0 ? `+$${diff.toFixed(0)}` : diff < 0 ? `-$${Math.abs(diff).toFixed(0)}` : '=';
+        html += `<div class="slot-row">
+          <div class="slot-label ${p?p.pos:''}">${slot.label}</div>
+          <div class="slot-player">
+            <div>
+              <div class="slot-player-name">${p?p.name:pk.name||'?'}</div>
+              <div style="font-size:10px;color:var(--dim);font-family:var(--mono)">${p?p.pos:''} · est $${est.toFixed(0)} · <span class="${cls}">${diffStr}</span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="slot-price ${cls}">$${pk.price}</span>
+              <button class="slot-remove" onclick="removeFromSlot('${slot.id}')">×</button>
+            </div>
+          </div>
+        </div>`;
+      } else {
+        html += `<div class="slot-row"><div class="slot-label ${slot.label}">${slot.label}</div><div class="slot-empty">empty</div></div>`;
+      }
+    });
+    html += '</div>';
+  });
+
+  document.getElementById('my-roster').innerHTML = html;
+}
+
+function removeFromSlot(slotId) {
+  const myPicks = state.teams[MY_TEAM].picks;
+  const idx = myPicks.findIndex(p=>p.slotId===slotId);
+  if (idx < 0) return;
+  const pk = myPicks[idx];
+  myPicks.splice(idx, 1);
+  // Also remove from draftedSet
+  delete state.draftedSet[pk.playerIdx];
+  saveState();
+  render();
+  showToast('Player removed from roster.');
+}
+
+// ── Teams panel ───────────────────────────────────────────────────────────────
+function renderTeams() {
+  const html = state.teams.map((team, ti) => {
+    const spent = team.picks.reduce((s,p)=>s+p.price,0);
+    const rem   = BUDGET - spent;
+    const pct   = Math.min(spent/BUDGET*100,100);
+    const picks = team.picks.map(pk => {
+      const p = FULL_LIST[pk.playerIdx];
+      const name = p ? p.name : (pk.name||'?');
+      const pos  = p ? p.pos : '';
+      return `<div style="font-size:11px;padding:2px 0;display:flex;justify-content:space-between">
+        <span style="color:${pos&&POS_COLORS[pos]||'#999'}">[${pos||'?'}]</span>
+        <span style="flex:1;margin:0 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${name}</span>
+        <span style="font-family:var(--mono);color:var(--amber)">$${pk.price}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="team-card ${ti===MY_TEAM?'my-team':''}">
+      <div class="team-header">
+        <div class="team-name">${ti===MY_TEAM?'⚡ ':''}<span id="tname-${ti}">${team.name}</span>
+          <span style="font-size:10px;cursor:pointer;color:var(--dim);margin-left:4px" onclick="renameTeam(${ti})">✎</span>
+        </div>
+        <div class="team-meta">${team.picks.length}/${ROSTER_SIZE} picks · <span style="color:${rem<30?'var(--red)':rem<80?'var(--amber)':'var(--green)'}">$${rem}</span> left</div>
+      </div>
+      <div class="team-budget-bar"><div style="width:${pct}%;height:100%;border-radius:2px;background:${pct>85?'var(--red)':pct>65?'var(--amber)':'var(--green)'};transition:width .3s"></div></div>
+      ${showAllPicks ? `<div style="margin-top:6px">${picks||'<div style="color:var(--muted);font-size:11px">No picks yet</div>'}</div>` : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('teams-panel').innerHTML = html;
+}
+
+function toggleShowAll() {
+  showAllPicks = !showAllPicks;
+  document.querySelector('[onclick="toggleShowAll()"]').textContent = showAllPicks ? 'Hide Picks' : 'Show Picks';
+  renderTeams();
+}
+
+function renameTeam(ti) {
+  const newName = prompt('Team name:', state.teams[ti].name);
+  if (newName && newName.trim()) {
+    state.teams[ti].name = newName.trim();
+    saveState();
+    renderTeams();
+  }
+}
+
+// ── Quick-draft / undraft ─────────────────────────────────────────────────────
+function quickDraft(idx) {
+  state.quickDrafted[idx] = true;
+  saveState();
+  render();
+  showToast(`${FULL_LIST[idx].name} removed from board.`);
+}
+
+function undraft(idx) {
+  const wasFullDraft = idx in state.draftedSet;
+  if (wasFullDraft) {
+    const teamIdx = state.draftedSet[idx];
+    // Remove from team picks
+    state.teams[teamIdx].picks = state.teams[teamIdx].picks.filter(pk => pk.playerIdx !== idx);
+    delete state.draftedSet[idx];
+  }
+  delete state.quickDrafted[idx];
+  saveState();
+  render();
+  showToast(`${FULL_LIST[idx].name} returned to available.`);
+}
+
+// ── Draft modal ───────────────────────────────────────────────────────────────
+let modalPlayerIdx = null;
+let selectedTeam   = MY_TEAM;
+let selectedSlot   = null;
+let modalMode      = 'new';   // 'new' | 'assign' | 'edit'
+
+function openModal(idx, mode) {
+  modalPlayerIdx = idx;
+  modalMode      = mode || 'new';
+  selectedTeam   = MY_TEAM;
+  selectedSlot   = null;
+  const p = FULL_LIST[idx];
+
+  document.getElementById('modal-player-name').textContent = p.name;
+  const rankStr = p.rank ? `Rank #${p.rank.toFixed(0)}` : '';
+  const tierStr = `T${p.tier} ${TIER_LABELS[p.tier]}`;
+  document.getElementById('modal-player-info').textContent =
+    [p.pos, rankStr, `Est $${p.est.toFixed(0)} ($${p.low}–$${p.high})`, tierStr].filter(Boolean).join(' · ');
+
+  // Pre-fill for edit mode
+  if (modalMode === 'edit' && idx in state.draftedSet) {
+    const teamIdx = state.draftedSet[idx];
+    const pick    = state.teams[teamIdx].picks.find(pk => pk.playerIdx === idx);
+    selectedTeam  = teamIdx;
+    selectedSlot  = pick ? pick.slotId : null;
+    document.getElementById('modal-price').value = pick ? pick.price : Math.round(p.est);
+  } else {
+    document.getElementById('modal-price').value = Math.round(p.est);
+  }
+
+  const titleSuffix = modalMode === 'edit' ? ' — EDIT' : modalMode === 'assign' ? ' — ASSIGN' : '';
+  document.getElementById('modal-player-name').textContent = p.name + titleSuffix;
+
+  // Teams
+  const teamGrid = document.getElementById('modal-teams');
+  teamGrid.innerHTML = state.teams.map((t,ti)=>
+    `<button class="team-pick-btn ${ti===MY_TEAM?'my-team-btn':''} ${ti===selectedTeam?'selected':''}"
+      onclick="selectTeam(${ti})">${ti===0?'⚡ ':''} ${t.name}</button>`
+  ).join('');
+
+  // Slots
+  updateSlotPicker(p);
+  updatePriceWarning(p);
+
+  document.getElementById('draft-modal').classList.add('open');
+  document.getElementById('modal-price').focus();
+  document.getElementById('modal-price').select();
+}
+
+function selectTeam(ti) {
+  selectedTeam = ti;
+  const p = FULL_LIST[modalPlayerIdx];
+  document.querySelectorAll('.team-pick-btn').forEach((b,i)=>{
+    b.classList.toggle('selected',i===ti);
+  });
+  // Show slot picker only if my team
+  document.getElementById('slot-row').style.display = ti===MY_TEAM?'block':'none';
+  if (ti===MY_TEAM) updateSlotPicker(p);
+}
+
+function updateSlotPicker(p) {
+  document.getElementById('slot-row').style.display = selectedTeam===MY_TEAM ? 'block':'none';
+  if (selectedTeam !== MY_TEAM) return;
+
+  const mySlots = state.teams[MY_TEAM].picks.map(pk=>pk.slotId);
+  const eligible = SLOTS_DEF.filter(s => s.pos.includes(p.pos));
+  const available = eligible.filter(s => !mySlots.includes(s.id));
+
+  // Auto-select best slot
+  if (!selectedSlot || !available.find(s=>s.id===selectedSlot)) {
+    // Prefer specific position slots first, then FLEX, SF, BN
+    const order = ['QB','RB','WR','TE'].includes(p.pos)
+      ? [p.pos, 'FLEX','SF','BN']
+      : ['FLEX','SF','BN'];
+    for (const lbl of order) {
+      const slot = available.find(s=>s.label===lbl);
+      if (slot) { selectedSlot = slot.id; break; }
+    }
+  }
+
+  const slotGrid = document.getElementById('modal-slots');
+  slotGrid.innerHTML = SLOTS_DEF.map(s => {
+    const isElig  = s.pos.includes(p.pos);
+    const isFull  = mySlots.includes(s.id);
+    const isSel   = s.id === selectedSlot;
+    return `<button class="slot-pick-btn ${isSel?'selected':''}"
+      ${(!isElig||isFull)?'disabled':''} onclick="selectedSlot='${s.id}';updateSlotPicker(FULL_LIST[${modalPlayerIdx}])"
+      title="${s.label} ${isFull?'(filled)':!isElig?'(ineligible)':''}">
+      ${s.label}${isFull?'✓':''}
+    </button>`;
+  }).join('');
+}
+
+document.getElementById('modal-price').addEventListener('input', () => {
+  if (modalPlayerIdx === null) return;
+  updatePriceWarning(FULL_LIST[modalPlayerIdx]);
+});
+
+function updatePriceWarning(p) {
+  const price = parseInt(document.getElementById('modal-price').value)||0;
+  const warn  = document.getElementById('price-warning');
+  if (price > p.high) {
+    warn.textContent = `⚠ $${price} exceeds your high estimate of $${p.high}!`;
+    warn.style.display = 'block';
+  } else { warn.style.display = 'none'; }
+}
+
+function closeModal() {
+  document.getElementById('draft-modal').classList.remove('open');
+  modalPlayerIdx = null;
+}
+
+function confirmDraft() {
+  const price = parseInt(document.getElementById('modal-price').value);
+  if (!price || price < 1) { showToast('Enter a valid price.'); return; }
+  if (selectedTeam === null) { showToast('Select a team.'); return; }
+  if (selectedTeam === MY_TEAM && !selectedSlot) { showToast('Select a roster slot.'); return; }
+
+  const p = FULL_LIST[modalPlayerIdx];
+
+  if (modalMode === 'edit') {
+    // Remove old pick from the team it was previously assigned to
+    const oldTeamIdx = state.draftedSet[modalPlayerIdx];
+    if (oldTeamIdx !== undefined) {
+      state.teams[oldTeamIdx].picks = state.teams[oldTeamIdx].picks.filter(pk => pk.playerIdx !== modalPlayerIdx);
+    }
+    delete state.draftedSet[modalPlayerIdx];
+  }
+
+  if (modalMode === 'assign') {
+    // Was quick-drafted, now being fully assigned — remove from quickDrafted
+    delete state.quickDrafted[modalPlayerIdx];
+  }
+
+  // Budget check only applies to my team on new/assign/edit
+  if (selectedTeam === MY_TEAM) {
+    const prevSpend = modalMode === 'edit'
+      ? state.teams[MY_TEAM].picks.reduce((s,pk)=>s+pk.price,0)  // old pick already removed
+      : myTeamSpent();
+    if (BUDGET - prevSpend < price) { showToast('Not enough budget!'); return; }
+  }
+
+  state.draftedSet[modalPlayerIdx] = selectedTeam;
+  state.teams[selectedTeam].picks.push({
+    playerIdx: modalPlayerIdx,
+    name: p.name,
+    price,
+    slotId: selectedTeam === MY_TEAM ? selectedSlot : null,
+  });
+  saveState();
+  closeModal();
+  render();
+  const verb = modalMode === 'edit' ? 'updated' : 'drafted';
+  showToast(`${p.name} ${verb} to ${state.teams[selectedTeam].name} for $${price}.`);
+}
+
+// allow Enter to confirm
+document.getElementById('modal-price').addEventListener('keydown', e => {
+  if (e.key === 'Enter') confirmDraft();
+  if (e.key === 'Escape') closeModal();
+});
+document.getElementById('draft-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('draft-modal')) closeModal();
+});
+
+// ── Export ────────────────────────────────────────────────────────────────────
+function exportDraft() {
+  const rows = ['Team,Player,Position,Price,Slot'];
+  state.teams.forEach(team => {
+    team.picks.forEach(pk => {
+      const p = FULL_LIST[pk.playerIdx];
+      rows.push([team.name, p?p.name:(pk.name||'?'), p?p.pos:'?', pk.price, pk.slotId||''].join(','));
+    });
+  });
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'draft_results.csv';
+  a.click();
+}
+
+// ── Main render ───────────────────────────────────────────────────────────────
+function render() {
+  updateTopbar();
+  updateBudgetBar();
+  renderBoard();
+  renderMyRoster();
+  renderTeams();
+}
+
+render();
+</script>
+</body>
+</html>
