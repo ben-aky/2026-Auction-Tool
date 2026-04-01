@@ -261,12 +261,24 @@ const TIER_LABELS = ['','ELITE','SOLID','VALUE','DEEP','SPEC'];
 const TIER_COLORS = ['','rgba(255,68,68,.18)','rgba(255,171,64,.18)','rgba(255,255,64,.12)','rgba(64,180,255,.15)','rgba(100,100,140,.2)'];
 const TIER_TEXT   = ['','#ff8080','#ffc77a','#fff07a','#80c8ff','#8899bb'];
 
-// ── Tabs ─────────────────────────────────────────────────────────────────────
+// ── Tabs + lazy chart init ───────────────────────────────────────────────────
+// Charts MUST be initialized after their canvas is visible; Chart.js renders
+// into a 0×0 box if the parent is display:none at init time.
+const chartInits   = {};   // tabId -> init function
+const chartsDone   = {};   // tabId -> bool
+
+function registerChart(tabId, fn) { chartInits[tabId] = fn; }
+
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('.tab,.tab-panel').forEach(el => el.classList.remove('active'));
     t.classList.add('active');
-    document.getElementById('tab-' + t.dataset.tab).classList.add('active');
+    const tabId = t.dataset.tab;
+    document.getElementById('tab-' + tabId).classList.add('active');
+    if (chartInits[tabId] && !chartsDone[tabId]) {
+      chartsDone[tabId] = true;
+      requestAnimationFrame(() => chartInits[tabId]());
+    }
   });
 });
 
@@ -390,10 +402,11 @@ function scatterCfg(pos, color) {
   };
 }
 
-['qb','rb','wr','te'].forEach(p => {
-  const POS = p.toUpperCase();
-  const cfg = scatterCfg(POS, POS_COLORS[POS]);
-  new Chart(document.getElementById('c-'+p), cfg);
+registerChart('analysis', () => {
+  ['qb','rb','wr','te'].forEach(p => {
+    const POS = p.toUpperCase();
+    new Chart(document.getElementById('c-'+p), scatterCfg(POS, POS_COLORS[POS]));
+  });
 });
 
 // ── Tiers ─────────────────────────────────────────────────────────────────────
@@ -416,22 +429,47 @@ const grid = document.getElementById('tier-grid');
   grid.appendChild(col);
 });
 
-// ── Picks chart ───────────────────────────────────────────────────────────────
-(function() {
-  const r1 = PICKS.filter(p => p.pick_label && p.pick_label.startsWith('1.') && parseFloat(p.target_price) > 5);
+// ── Picks chart + table (lazy) ────────────────────────────────────────────────
+(function buildPicksTable() {
+  // Table renders immediately (no canvas needed)
+  const rounds = {};
+  PICKS.forEach(p => {
+    const r = String(p.pick_label||'').split('.')[0];
+    rounds[r] = rounds[r] || [];
+    rounds[r].push(p);
+  });
+  const container = document.getElementById('picks-rounds');
+  Object.keys(rounds).sort((a,b)=>+a-+b).forEach(rnd => {
+    const rpicks = rounds[rnd].sort((a,b) => a.pick_label.localeCompare(b.pick_label));
+    container.innerHTML += `<div class="round-header">ROUND ${rnd}</div>
+      <div class="tbl-wrap" style="margin-bottom:8px">
+        <table><thead><tr>
+          <th>PICK</th><th>TARGET $</th><th>RANGE</th><th>SAMPLE SIZE</th>
+        </tr></thead><tbody>
+        ${rpicks.map(p=>`<tr>
+          <td style="font-family:var(--mono);font-weight:600;color:var(--cyan)">${p.pick_label}</td>
+          <td class="money money-amber">$${parseFloat(p.target_price).toFixed(1)}</td>
+          <td style="font-family:var(--mono);color:var(--dim)">${p.range||'—'}</td>
+          <td style="color:var(--dim)">${p.n_drafts} draft${p.n_drafts===1?'':'s'}</td>
+        </tr>`).join('')}
+        </tbody></table>
+      </div>`;
+  });
+})();
+
+registerChart('picks', () => {
+  const r1 = PICKS.filter(p => p.pick_label && p.pick_label.startsWith('1.') && parseFloat(p.target_price) >= 1);
   const labels = r1.map(p => p.pick_label);
   const vals   = r1.map(p => parseFloat(p.target_price)||0);
-  const lows   = r1.map(p => { const m = String(p.range||'').match(/\$(\d+)/); return m ? parseInt(m[1]) : 0; });
-  const highs  = r1.map(p => { const m = String(p.range||'').match(/–\$(\d+)/); return m ? parseInt(m[1]) : 0; });
+  const highs  = r1.map(p => { const m = String(p.range||'').match(/[\u2013\-]\$?(\d+)/); return m ? parseInt(m[1]) : 0; });
 
   new Chart(document.getElementById('c-picks'), {
+    type: 'bar',
     data: {
       labels,
       datasets: [
-        {type:'bar', label:'Target', data:vals,
-         backgroundColor:'rgba(0,212,240,.25)',borderColor:'#00d4f0',borderWidth:1.5,borderRadius:3},
-        {type:'bar', label:'Range High', data:highs,
-         backgroundColor:'rgba(255,171,64,.15)',borderColor:'#ffab40',borderWidth:1,borderRadius:3},
+        {label:'Target',     data:vals,  backgroundColor:'rgba(0,212,240,.25)',borderColor:'#00d4f0',borderWidth:1.5,borderRadius:3},
+        {label:'Range High', data:highs, backgroundColor:'rgba(255,171,64,.15)',borderColor:'#ffab40',borderWidth:1,borderRadius:3},
       ]
     },
     options: {
@@ -446,32 +484,7 @@ const grid = document.getElementById('tier-grid');
       }
     }
   });
-
-  // Picks table by round
-  const rounds = {};
-  PICKS.forEach(p => {
-    const r = String(p.pick_label||'').split('.')[0];
-    rounds[r] = rounds[r] || [];
-    rounds[r].push(p);
-  });
-  const container = document.getElementById('picks-rounds');
-  Object.keys(rounds).sort((a,b)=>+a-+b).forEach(rnd => {
-    const picks = rounds[rnd].sort((a,b) => a.pick_label.localeCompare(b.pick_label));
-    container.innerHTML += `<div class="round-header">ROUND ${rnd}</div>
-      <div class="tbl-wrap" style="margin-bottom:8px">
-        <table><thead><tr>
-          <th>PICK</th><th>TARGET $</th><th>RANGE</th><th>SAMPLE SIZE</th>
-        </tr></thead><tbody>
-        ${picks.map(p=>`<tr>
-          <td style="font-family:var(--mono);font-weight:600;color:var(--cyan)">${p.pick_label}</td>
-          <td class="money money-amber">$${parseFloat(p.target_price).toFixed(1)}</td>
-          <td style="font-family:var(--mono);color:var(--dim)">${p.range||'—'}</td>
-          <td style="color:var(--dim)">${p.n_drafts} draft${p.n_drafts===1?'':'s'}</td>
-        </tr>`).join('')}
-        </tbody></table>
-      </div>`;
-  });
-})();
+});
 
 // ── Rookie prospects table ────────────────────────────────────────────────────
 (function() {
@@ -501,43 +514,9 @@ const grid = document.getElementById('tier-grid');
   </tbody></table>`;
 })();
 
-// ── Scarcity chart ────────────────────────────────────────────────────────────
-(function() {
+// ── Scarcity DOM (renders immediately, no canvas) ─────────────────────────────
+(function buildScarcityDOM() {
   const POS_LIST = ['QB','RB','WR','TE'];
-  const datasets = POS_LIST.map(pos => {
-    const sorted = PLAYERS.filter(p=>p.pos===pos && p.rank)
-      .sort((a,b)=>a.rank-b.rank)
-      .map((p,i)=>({x:i+1, y:p.est, name:p.name}));
-    return {
-      label: pos,
-      data: sorted,
-      borderColor: POS_COLORS[pos],
-      backgroundColor: POS_COLORS[pos]+'30',
-      borderWidth: 2,
-      pointRadius: 3,
-      pointHoverRadius: 5,
-      tension: 0.3,
-      fill: false,
-    };
-  });
-
-  new Chart(document.getElementById('c-scarcity'), {
-    type:'line',
-    data:{datasets},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:ctx=>`${ctx.raw.name}: $${ctx.raw.y.toFixed(1)}`}}
-      },
-      scales:{
-        x:{title:{display:true,text:'Positional Rank',color:'#4a6a8a'},grid:{color:gridColor}},
-        y:{title:{display:true,text:'Est. Price ($)',color:'#4a6a8a'},grid:{color:gridColor},min:0}
-      }
-    }
-  });
-
-  // Drop stats
   const statsDiv = document.getElementById('drop-stats');
   statsDiv.innerHTML = '<div class="chart-title">POSITION VALUE DROPS</div>';
   POS_LIST.forEach(pos => {
@@ -555,8 +534,6 @@ const grid = document.getElementById('tier-grid');
       <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">#20 <span style="color:var(--dim)">$${t20.toFixed(0)}</span></span>
     </div>`;
   });
-
-  // Value tiers highlight
   const vt = document.getElementById('value-tiers');
   vt.innerHTML = PLAYERS
     .filter(p=>p.tier<=2 && p.rank)
@@ -567,6 +544,43 @@ const grid = document.getElementById('tier-grid');
       <span class="money money-amber">$${p.est.toFixed(0)}</span>
     </div>`).join('');
 })();
+
+// ── Scarcity chart (lazy) ─────────────────────────────────────────────────────
+registerChart('scarcity', () => {
+  const POS_LIST = ['QB','RB','WR','TE'];
+  const datasets = POS_LIST.map(pos => {
+    const sorted = PLAYERS.filter(p=>p.pos===pos && p.rank)
+      .sort((a,b)=>a.rank-b.rank)
+      .map((p,i)=>({x:i+1, y:p.est, name:p.name}));
+    return {
+      label: pos,
+      data: sorted,
+      borderColor: POS_COLORS[pos],
+      backgroundColor: POS_COLORS[pos]+'30',
+      borderWidth: 2,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      tension: 0.3,
+      fill: false,
+    };
+  });
+  new Chart(document.getElementById('c-scarcity'), {
+    type:'line',
+    data:{datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      parsing: false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`${ctx.raw.name}: $${ctx.raw.y.toFixed(1)}`}}
+      },
+      scales:{
+        x:{type:'linear',title:{display:true,text:'Positional Rank',color:'#4a6a8a'},grid:{color:gridColor}},
+        y:{title:{display:true,text:'Est. Price ($)',color:'#4a6a8a'},grid:{color:gridColor},min:0}
+      }
+    }
+  });
+});
 </script>
 </body>
 </html>
