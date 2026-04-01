@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dynasty Auction 2026</title>
+<style>
+:root {
+  --bg:#f0efec; --bg2:#e6e4e0; --bg3:#ffffff;
+  --text:#1a1a1a; --text2:#555; --text3:#888; --text4:#aaa;
+  --border:#d8d8d8; --border2:#e0e0e0;
+  --input-bg:#ffffff; --input-border:#ccc;
+  --active-bg:#1a1a1a; --active-text:#ffffff;
+  --ndot-empty:#ddd; --ndot-border:#bbb; --ndot-filled:#1a1a1a;
+  --track-bg:rgba(0,0,0,.1); --divider:rgba(0,0,0,.07);
+  --best-bg:#eef6ff; --best-border:#b3d4f5; --best-text:#1a4a7a;
+  --nom-bg:#fffbe6; --nom-border:#f0c040; --nom-text:#7a5f00;
+  --chart-grid:rgba(0,0,0,.07); --chart-tick:#666; --chart-title:#666;
+}
+[data-theme="dark"] {
+  --bg:#111111; --bg2:#1c1c1c; --bg3:#252525;
+  --text:#e2e2e2; --text2:#999; --text3:#777; --text4:#555;
+  --border:#333; --border2:#2e2e2e;
+  --input-bg:#1c1c1c; --input-border:#3a3a3a;
+  --active-bg:#e2e2e2; --active-text:#111111;
+  --ndot-empty:#2e2e2e; --ndot-border:#404040; --ndot-filled:#e2e2e2;
+  --track-bg:rgba(255,255,255,.08); --divider:rgba(255,255,255,.06);
+  --best-bg:#0c1f33; --best-border:#1a4060; --best-text:#7eb8e8;
+  --nom-bg:#1a1600; --nom-border:#4a3c00; --nom-text:#c8a030;
+  --chart-grid:rgba(255,255,255,.07); --chart-tick:#aaa; --chart-title:#aaa;
+}
+* { box-sizing:border-box; margin:0; padding:0 }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+        background:var(--bg); color:var(--text); padding:20px;
+        max-width:960px; margin:0 auto; transition:background .25s,color .25s }
+h1 { font-size:20px; font-weight:500; margin-bottom:2px }
+.sub { font-size:13px; color:var(--text3); margin-bottom:16px }
+.hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:2px }
+.theme-btn { font-size:12px; background:none; border:1px solid var(--border);
+              border-radius:6px; padding:3px 10px; cursor:pointer; color:var(--text3);
+              transition:all .2s }
+.theme-btn:hover { border-color:var(--text2); color:var(--text2) }
+
+/* Budget */
+.bwrap { background:var(--bg2); border-radius:10px; padding:14px 16px; margin-bottom:10px }
+.brow  { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px }
+.btitle { font-size:12px; color:var(--text2) }
+.bamount { font-size:24px; font-weight:500; color:var(--text) }
+.bcommit { font-size:13px; color:var(--text2) }
+.btrack { height:5px; background:var(--track-bg); border-radius:3px; overflow:hidden; margin-bottom:7px }
+.bfill  { height:100%; border-radius:3px; transition:width .3s,background .3s }
+.bsub   { font-size:12px; color:var(--text3) }
+.reset  { font-size:12px; color:var(--text3); background:none; border:none;
+           cursor:pointer; text-decoration:underline; padding:0 }
+.apanel { margin-top:10px; padding-top:10px; border-top:1px solid var(--divider) }
+.aname  { font-size:13px; font-weight:500; color:var(--text); margin-bottom:8px }
+.actls  { display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+.actls label { font-size:12px; color:var(--text2) }
+.actls input  { width:72px; padding:5px 8px; border:1px solid var(--input-border);
+                 border-radius:6px; font-size:13px; background:var(--input-bg); color:var(--text) }
+.actls button { padding:5px 14px; border:1px solid var(--border); border-radius:6px;
+                 background:var(--bg3); cursor:pointer; font-size:13px; color:var(--text) }
+.actls .confirm { background:var(--active-bg); color:var(--active-text); border-color:var(--active-bg) }
+.actls .danger  { color:#e05050; border-color:#e05050; background:none }
+.tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:9px; padding-top:8px;
+         border-top:1px solid var(--divider) }
+.tag { font-size:11px; background:var(--bg3); border:1px solid var(--border);
+        border-radius:6px; padding:3px 8px; display:flex; align-items:center;
+        gap:4px; color:var(--text2) }
+.tag strong { color:var(--text) }
+.tag-x { cursor:pointer; color:var(--text4); font-size:14px; line-height:1 }
+
+/* Roster needs */
+.needs-wrap { background:var(--bg3); border-radius:10px; padding:11px 15px; margin-bottom:10px;
+               border:1px solid var(--border2) }
+.needs-title { font-size:11px; color:var(--text3); margin-bottom:7px; text-transform:uppercase; letter-spacing:.5px }
+.needs-grid { display:flex; gap:18px; flex-wrap:wrap }
+.need-pos { display:flex; flex-direction:column; align-items:center; gap:4px }
+.need-label { font-size:11px; color:var(--text2); font-weight:500 }
+.need-dots { display:flex; gap:3px }
+.ndot { width:11px; height:11px; border-radius:50%; background:var(--ndot-empty);
+         border:1.5px solid var(--ndot-border); transition:all .2s }
+.ndot.filled { background:var(--ndot-filled); border-color:var(--ndot-filled) }
+.nom-banner { background:var(--nom-bg); border:1px solid var(--nom-border); border-radius:7px;
+               padding:7px 11px; margin-top:8px; font-size:12px; color:var(--nom-text); display:none }
+
+/* Controls */
+.ctrl-row { display:flex; gap:7px; margin-bottom:10px; flex-wrap:wrap; align-items:center }
+.search-wrap { flex:1; min-width:160px; position:relative }
+.search-wrap input { width:100%; padding:6px 10px 6px 28px; border:1px solid var(--border);
+                      border-radius:8px; font-size:13px; background:var(--input-bg); color:var(--text) }
+.sicon { position:absolute; left:8px; top:50%; transform:translateY(-50%);
+          color:var(--text4); font-size:13px; pointer-events:none }
+.sort-btns { display:flex; gap:4px }
+.sbtn { padding:5px 11px; border:1px solid var(--border); border-radius:7px;
+         background:var(--bg3); cursor:pointer; font-size:12px; color:var(--text2) }
+.sbtn.on { background:var(--active-bg); color:var(--active-text); border-color:var(--active-bg) }
+
+/* Best value banner */
+.best-banner { background:var(--best-bg); border:1px solid var(--best-border);
+                border-radius:8px; padding:8px 13px; margin-bottom:10px;
+                font-size:13px; color:var(--best-text); display:none }
+
+/* Tabs */
+.tabs { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap }
+.tab { padding:5px 15px; border:1px solid var(--border); border-radius:8px;
+        background:var(--bg3); cursor:pointer; font-size:13px; color:var(--text2) }
+.tab.on { background:var(--active-bg); color:var(--active-text); border-color:var(--active-bg) }
+.tab.ptab { border-color:#7F77DD; color:#7F77DD }
+.tab.ptab.on { background:#7F77DD; color:white; border-color:#7F77DD }
+
+/* Age legend */
+.age-leg { display:flex; gap:12px; font-size:11px; color:var(--text3); margin-bottom:10px; flex-wrap:wrap }
+.adot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:3px; vertical-align:middle }
+
+/* Tier cards */
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(88px,1fr)); gap:7px; margin-bottom:10px }
+.card { background:var(--bg3); border-radius:8px; padding:8px 10px; border-left:3px solid }
+.clbl { font-size:11px; color:var(--text3); margin-bottom:2px }
+.cval { font-size:13px; font-weight:500; color:var(--text) }
+.csub { font-size:11px; color:var(--text4); margin-top:1px }
+
+/* Chart */
+.chart-box { background:var(--bg3); border-radius:12px; padding:18px; margin-bottom:10px }
+
+/* Legend */
+.legend { display:flex; flex-wrap:wrap; gap:11px; font-size:12px; color:var(--text3) }
+.dot { width:9px; height:9px; border-radius:2px; display:inline-block; margin-right:3px; vertical-align:middle }
+.hint { font-size:11px; color:var(--text4); margin-top:7px }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>Dynasty Auction 2026</h1>
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙 Dark</button>
+</div>
+<p class="sub">12 teams · $300 budget · Full PPR + 0.5 TE premium · 2QB · Best Ball · Dynasty</p>
+
+<div class="bwrap">
+  <div class="brow">
+    <span class="btitle">Remaining budget</span>
+    <button class="reset" onclick="resetAll()">Reset all</button>
+  </div>
+  <div class="brow">
+    <span class="bamount" id="bAmt">$300</span>
+    <span class="bcommit" id="bCom">$0 spent</span>
+  </div>
+  <div class="btrack"><div class="bfill" id="bFill" style="width:100%;background:#27ae60"></div></div>
+  <div class="bsub" id="bSub">Click any bar to log what you paid</div>
+  <div class="apanel" id="aPanel" style="display:none">
+    <div class="aname" id="aName"></div>
+    <div class="actls">
+      <label>You paid:</label>
+      <input type="number" id="aInput" min="1" max="300" placeholder="$">
+      <button class="confirm" onclick="confirmAcquire()">Add</button>
+      <button onclick="cancelAcquire()">Cancel</button>
+      <button class="danger" id="aRemove" onclick="removeAcquire()" style="display:none">Remove</button>
+    </div>
+  </div>
+  <div class="tags" id="aTags" style="display:none"></div>
+</div>
+
+<div class="needs-wrap">
+  <div class="needs-title">Starting lineup needs</div>
+  <div class="needs-grid" id="needsGrid"></div>
+  <div class="nom-banner" id="nomBanner"></div>
+</div>
+
+<div class="best-banner" id="bestBanner"></div>
+
+<div class="ctrl-row">
+  <div class="search-wrap">
+    <span class="sicon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search player..." oninput="onSearch()">
+  </div>
+  <div class="sort-btns">
+    <button class="sbtn on" onclick="setSort('val')" id="sVal">Value ↓</button>
+    <button class="sbtn" onclick="setSort('age')" id="sAge">Age ↑</button>
+    <button class="sbtn" onclick="setSort('tier')" id="sTier">Tier ↑</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="age-leg">
+  <span><span class="adot" style="background:#1D9E75"></span>Age ≤22</span>
+  <span><span class="adot" style="background:#639922"></span>Age 23–25</span>
+  <span><span class="adot" style="background:#EF9F27"></span>Age 26–27</span>
+  <span><span class="adot" style="background:#E24B4A"></span>Age 28+</span>
+</div>
+
+<div class="cards" id="cards"></div>
+<div class="chart-box"><div id="wrap" style="position:relative;width:100%"><canvas id="chart"></canvas></div></div>
+<div class="legend" id="legend"></div>
+<p class="hint">Click bar to log price · Age dot = dynasty value · Dashed lines = tier breaks</p>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const BUDGET = 300;
+const TC = { 1:'#7F77DD', 2:'#378ADD', 3:'#1D9E75', 4:'#639922', 5:'#EF9F27', 6:'#E07020', 7:'#888780', 8:'#888780', 9:'#888780' };
+const TN = { 1:'Elite', 2:'Starter', 3:'Upside', 4:'Depth', 5:'Flier', 6:'Late', 7:'Deep', 8:'Deep', 9:'Deep' };
+const RC = { 1:'#7F77DD', 2:'#378ADD', 3:'#1D9E75', 4:'#EF9F27' };
+const D  = {"WR": [{"name": "Ja'Marr Chase", "age": 26, "tier": 1, "val": 27.6, "floor": 23.5, "ceil": 31.7}, {"name": "Puka Nacua", "age": 24, "tier": 2, "val": 27.4, "floor": 23.3, "ceil": 31.5}, {"name": "Jaxon Smith-Njigba", "age": 24, "tier": 2, "val": 27.1, "floor": 23.0, "ceil": 31.2}, {"name": "Justin Jefferson", "age": 26, "tier": 3, "val": 26.9, "floor": 22.9, "ceil": 30.9}, {"name": "CeeDee Lamb", "age": 26, "tier": 3, "val": 26.6, "floor": 22.6, "ceil": 30.6}, {"name": "Amon-Ra St. Brown", "age": 26, "tier": 3, "val": 26.3, "floor": 22.4, "ceil": 30.2}, {"name": "Malik Nabers", "age": 22, "tier": 3, "val": 26.0, "floor": 22.1, "ceil": 29.9}, {"name": "Drake London", "age": 24, "tier": 4, "val": 25.8, "floor": 21.9, "ceil": 29.7}, {"name": "Nico Collins", "age": 27, "tier": 4, "val": 25.5, "floor": 21.7, "ceil": 29.3}, {"name": "Tetairoa McMillan", "age": 23, "tier": 4, "val": 25.2, "floor": 21.4, "ceil": 29.0}, {"name": "George Pickens", "age": 25, "tier": 4, "val": 24.9, "floor": 21.2, "ceil": 28.6}, {"name": "Emeka Egbuka", "age": 23, "tier": 5, "val": 24.7, "floor": 21.0, "ceil": 28.4}, {"name": "Garrett Wilson", "age": 25, "tier": 5, "val": 24.4, "floor": 20.7, "ceil": 28.1}, {"name": "Chris Olave", "age": 25, "tier": 5, "val": 24.1, "floor": 20.5, "ceil": 27.7}, {"name": "Ladd McConkey", "age": 24, "tier": 5, "val": 23.8, "floor": 20.2, "ceil": 27.4}, {"name": "Rashee Rice", "age": 25, "tier": 5, "val": 23.7, "floor": 20.1, "ceil": 27.3}, {"name": "Tee Higgins", "age": 27, "tier": 5, "val": 23.3, "floor": 19.8, "ceil": 26.8}, {"name": "A.J. Brown", "age": 28, "tier": 6, "val": 23.0, "floor": 19.6, "ceil": 26.4}, {"name": "Rome Odunze", "age": 23, "tier": 6, "val": 22.8, "floor": 19.4, "ceil": 26.2}, {"name": "Luther Burden III", "age": 22, "tier": 6, "val": 22.6, "floor": 19.2, "ceil": 26.0}, {"name": "Zay Flowers", "age": 25, "tier": 6, "val": 22.2, "floor": 18.9, "ceil": 25.5}, {"name": "Marvin Harrison Jr.", "age": 23, "tier": 6, "val": 21.9, "floor": 18.6, "ceil": 25.2}, {"name": "Brian Thomas Jr.", "age": 23, "tier": 6, "val": 21.7, "floor": 18.4, "ceil": 25.0}, {"name": "DeVonta Smith", "age": 27, "tier": 6, "val": 21.4, "floor": 18.2, "ceil": 24.6}, {"name": "Jaylen Waddle", "age": 27, "tier": 6, "val": 21.2, "floor": 18.0, "ceil": 24.4}, {"name": "Jameson Williams", "age": 25, "tier": 6, "val": 20.8, "floor": 17.7, "ceil": 23.9}, {"name": "DK Metcalf", "age": 28, "tier": 7, "val": 20.6, "floor": 17.5, "ceil": 23.7}, {"name": "Jordan Addison", "age": 24, "tier": 7, "val": 20.2, "floor": 17.2, "ceil": 23.2}, {"name": "Christian Watson", "age": 26, "tier": 8, "val": 20.2, "floor": 17.2, "ceil": 23.2}, {"name": "Ricky Pearsall", "age": 25, "tier": 8, "val": 19.7, "floor": 16.7, "ceil": 22.7}, {"name": "DJ Moore", "age": 28, "tier": 8, "val": 19.5, "floor": 16.6, "ceil": 22.4}, {"name": "Xavier Worthy", "age": 22, "tier": 8, "val": 19.3, "floor": 16.4, "ceil": 22.2}, {"name": "Terry McLaurin", "age": 30, "tier": 8, "val": 18.9, "floor": 16.1, "ceil": 21.7}, {"name": "Alec Pierce", "age": 25, "tier": 8, "val": 18.9, "floor": 16.1, "ceil": 21.7}, {"name": "Jakobi Meyers", "age": 29, "tier": 8, "val": 18.4, "floor": 15.6, "ceil": 21.2}, {"name": "Michael Wilson", "age": 26, "tier": 8, "val": 18.1, "floor": 15.4, "ceil": 20.8}, {"name": "Courtland Sutton", "age": 30, "tier": 8, "val": 17.7, "floor": 15.0, "ceil": 20.4}, {"name": "Michael Pittman Jr.", "age": 28, "tier": 8, "val": 17.4, "floor": 14.8, "ceil": 20.0}, {"name": "Jayden Higgins", "age": 23, "tier": 8, "val": 17.1, "floor": 14.5, "ceil": 19.7}, {"name": "Wan'Dale Robinson", "age": 25, "tier": 8, "val": 16.9, "floor": 14.4, "ceil": 19.4}, {"name": "Davante Adams", "age": 33, "tier": 8, "val": 16.6, "floor": 14.1, "ceil": 19.1}, {"name": "Travis Hunter", "age": 22, "tier": 8, "val": 16.5, "floor": 14.0, "ceil": 19.0}, {"name": "Mike Evans", "age": 32, "tier": 9, "val": 16.0, "floor": 13.6, "ceil": 18.4}, {"name": "Quentin Johnston", "age": 24, "tier": 9, "val": 15.9, "floor": 13.5, "ceil": 18.3}, {"name": "Parker Washington", "age": 24, "tier": 9, "val": 15.8, "floor": 13.4, "ceil": 18.2}, {"name": "Chris Godwin Jr.", "age": 30, "tier": 9, "val": 15.1, "floor": 12.8, "ceil": 17.4}, {"name": "Jayden Reed", "age": 25, "tier": 9, "val": 14.9, "floor": 12.7, "ceil": 17.1}, {"name": "Josh Downs", "age": 24, "tier": 9, "val": 14.7, "floor": 12.5, "ceil": 16.9}, {"name": "Khalil Shakir", "age": 26, "tier": 9, "val": 14.3, "floor": 12.2, "ceil": 16.4}, {"name": "Brandon Aiyuk", "age": 28, "tier": 9, "val": 14.2, "floor": 12.1, "ceil": 16.3}, {"name": "Matthew Golden", "age": 22, "tier": 9, "val": 13.7, "floor": 11.6, "ceil": 15.8}, {"name": "Jauan Jennings", "age": 28, "tier": 9, "val": 13.5, "floor": 11.5, "ceil": 15.5}, {"name": "Romeo Doubs", "age": 25, "tier": 9, "val": 13.2, "floor": 11.2, "ceil": 15.2}, {"name": "Stefon Diggs", "age": 32, "tier": 9, "val": 13.0, "floor": 11.0, "ceil": 15.0}, {"name": "Jalen Coker", "age": 24, "tier": 9, "val": 12.7, "floor": 10.8, "ceil": 14.6}, {"name": "Tre Harris", "age": 24, "tier": 9, "val": 12.5, "floor": 10.6, "ceil": 14.4}, {"name": "Rashid Shaheed", "age": 27, "tier": 9, "val": 12.1, "floor": 10.3, "ceil": 13.9}, {"name": "Deebo Samuel Sr.", "age": 30, "tier": 9, "val": 11.9, "floor": 10.1, "ceil": 13.7}, {"name": "Jerry Jeudy", "age": 26, "tier": 9, "val": 11.6, "floor": 9.9, "ceil": 13.3}, {"name": "Jalen McMillan", "age": 24, "tier": 9, "val": 11.3, "floor": 9.6, "ceil": 13.0}, {"name": "Troy Franklin", "age": 23, "tier": 9, "val": 11.1, "floor": 9.4, "ceil": 12.8}, {"name": "Kayshon Boutte", "age": 23, "tier": 9, "val": 10.8, "floor": 9.2, "ceil": 12.4}, {"name": "Jaylin Noel", "age": 23, "tier": 9, "val": 10.5, "floor": 8.9, "ceil": 12.1}, {"name": "Tyreek Hill", "age": 32, "tier": 9, "val": 10.3, "floor": 8.8, "ceil": 11.8}, {"name": "Elic Ayomanor", "age": 22, "tier": 9, "val": 9.9, "floor": 8.4, "ceil": 11.4}, {"name": "Adonai Mitchell", "age": 23, "tier": 9, "val": 9.7, "floor": 8.2, "ceil": 11.2}, {"name": "Chimere Dike", "age": 24, "tier": 9, "val": 9.3, "floor": 7.9, "ceil": 10.7}, {"name": "Pat Bryant", "age": 23, "tier": 9, "val": 9.1, "floor": 7.7, "ceil": 10.5}, {"name": "Darnell Mooney", "age": 28, "tier": 9, "val": 8.8, "floor": 7.5, "ceil": 10.1}, {"name": "Keon Coleman", "age": 22, "tier": 9, "val": 8.5, "floor": 7.2, "ceil": 9.8}, {"name": "Kyle Williams", "age": 23, "tier": 9, "val": 8.3, "floor": 7.1, "ceil": 9.5}, {"name": "Isaac TeSlaa", "age": 24, "tier": 9, "val": 7.9, "floor": 6.7, "ceil": 9.1}, {"name": "Tory Horton", "age": 23, "tier": 9, "val": 7.7, "floor": 6.5, "ceil": 8.9}, {"name": "Calvin Ridley", "age": 31, "tier": 9, "val": 7.4, "floor": 6.3, "ceil": 8.5}, {"name": "Marvin Mims Jr.", "age": 24, "tier": 9, "val": 7.1, "floor": 6.0, "ceil": 8.2}, {"name": "Tank Dell", "age": 26, "tier": 9, "val": 6.8, "floor": 5.8, "ceil": 7.8}, {"name": "Rashod Bateman", "age": 26, "tier": 9, "val": 6.5, "floor": 5.5, "ceil": 7.5}, {"name": "Christian Kirk", "age": 29, "tier": 9, "val": 6.2, "floor": 5.3, "ceil": 7.1}, {"name": "Jack Bech", "age": 23, "tier": 9, "val": 5.9, "floor": 5.0, "ceil": 6.8}, {"name": "Cedric Tillman", "age": 25, "tier": 9, "val": 5.7, "floor": 4.8, "ceil": 6.6}, {"name": "Tre Tucker", "age": 25, "tier": 9, "val": 5.3, "floor": 4.5, "ceil": 6.1}, {"name": "Jalen Nailor", "age": 27, "tier": 9, "val": 5.1, "floor": 4.3, "ceil": 5.9}, {"name": "Tez Johnson", "age": 23, "tier": 9, "val": 4.7, "floor": 4.0, "ceil": 5.4}, {"name": "Malik Washington", "age": 25, "tier": 9, "val": 4.4, "floor": 3.7, "ceil": 5.1}, {"name": "Cooper Kupp", "age": 32, "tier": 9, "val": 4.2, "floor": 3.6, "ceil": 4.8}, {"name": "Xavier Legette", "age": 25, "tier": 9, "val": 3.9, "floor": 3.3, "ceil": 4.5}, {"name": "DeMario Douglas", "age": 25, "tier": 9, "val": 3.6, "floor": 3.1, "ceil": 4.1}, {"name": "Hollywood Brown", "age": 28, "tier": 9, "val": 3.3, "floor": 2.8, "ceil": 3.8}, {"name": "Keenan Allen", "age": 33, "tier": 9, "val": 3.0, "floor": 2.6, "ceil": 3.4}, {"name": "Dontayvion Wicks", "age": 24, "tier": 9, "val": 2.8, "floor": 2.4, "ceil": 3.2}, {"name": "Ryan Flournoy", "age": 26, "tier": 9, "val": 2.5, "floor": 2.1, "ceil": 2.9}, {"name": "Darius Slayton", "age": 29, "tier": 9, "val": 2.2, "floor": 1.9, "ceil": 2.5}, {"name": "Devaughn Vele", "age": 28, "tier": 9, "val": 1.9, "floor": 1.6, "ceil": 2.2}, {"name": "Isaiah Bond", "age": 22, "tier": 9, "val": 1.6, "floor": 1.4, "ceil": 1.8}, {"name": "Jalen Tolbert", "age": 27, "tier": 9, "val": 1.3, "floor": 1.1, "ceil": 1.5}, {"name": "Tyrell Shavers", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jahdae Walker", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Zay Jones", "age": 31, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Kevin Austin Jr.", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jamari Thrash", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jared Wayne", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Lil'Jordan Humphrey", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tim Patrick", "age": 32, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tyler Johnson", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "David Sills V", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Darius Cooper", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Diontae Johnson", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Van Jefferson", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Kalif Raymond", "age": 31, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Marquez Valdes-Scantling", "age": 31, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Bo Melton", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Isaiah Hodgins", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Josh Reynolds", "age": 31, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Malachi Corley", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Kameron Johnson", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jordan Watkins", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Mitch Tinsley", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Theo Wease Jr.", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Allen Lazard", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jonathan Mingo", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Ray-Ray McCloud III", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Ricky White III", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Isaiah Williams", "age": 39, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jake Bobo", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tyler Scott", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Nick Nash", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jacob Cowing", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Xavier Smith", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Ben Skowronek", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Shedrick Jackson", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Scotty Miller", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Michael Bandy", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Arian Smith", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Dante Pettis", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Casey Washington", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Chris Moore", "age": 32, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Cedrick Wilson Jr.", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Dohnte Meyers", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "David Moore", "age": 31, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Javon Baker", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "JuJu Smith-Schuster", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jalen Royals", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jaylin Lane", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tai Felton", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tutu Atwell", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Elijah Moore", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jordan Whittington", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "DeAndre Hopkins", "age": 33, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Savion Williams", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Mack Hollins", "age": 32, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "KeAndre Lambert-Smith", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Luke McCaffrey", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Kendrick Bourne", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Gabe Davis", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "John Metchie III", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tyquan Thornton", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Ja'Lynn Polk", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Calvin Austin III", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Dont'e Thornton Jr.", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Andrei Iosivas", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Roman Wilson", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Konata Mumpfield", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Joshua Palmer", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jahan Dotson", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Treylon Burks", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Dyami Brown", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Xavier Hutchinson", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Curtis Samuel", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Devontez Walker", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Sterling Shepard", "age": 33, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jimmy Horn Jr.", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Isaiah Williams", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Nick Westbrook-Ikhine", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jalin Hyatt", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Greg Dortch", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Efton Chism III", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "KaVontae Turpin", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Xavier Restrepo", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Brandin Cooks", "age": 32, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tahj Washington", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Noah Brown", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Olamide Zaccheaus", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jermaine Burton", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Demarcus Robinson", "age": 31, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Trey Palmer", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tyler Lockett", "age": 33, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Johnny Wilson", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}], "QB": [{"name": "Josh Allen", "age": 29, "tier": 1, "val": 36.7, "floor": 31.2, "ceil": 42.2}, {"name": "Drake Maye", "age": 23, "tier": 1, "val": 35.7, "floor": 30.3, "ceil": 41.1}, {"name": "Lamar Jackson", "age": 29, "tier": 1, "val": 34.8, "floor": 29.6, "ceil": 40.0}, {"name": "Jayden Daniels", "age": 25, "tier": 1, "val": 33.7, "floor": 28.6, "ceil": 38.8}, {"name": "Joe Burrow", "age": 29, "tier": 2, "val": 32.8, "floor": 27.9, "ceil": 37.7}, {"name": "Patrick Mahomes II", "age": 30, "tier": 2, "val": 31.7, "floor": 26.9, "ceil": 36.5}, {"name": "Caleb Williams", "age": 24, "tier": 2, "val": 30.8, "floor": 26.2, "ceil": 35.4}, {"name": "Justin Herbert", "age": 28, "tier": 3, "val": 29.7, "floor": 25.2, "ceil": 34.2}, {"name": "Jalen Hurts", "age": 27, "tier": 3, "val": 28.6, "floor": 24.3, "ceil": 32.9}, {"name": "Jaxson Dart", "age": 22, "tier": 3, "val": 27.7, "floor": 23.5, "ceil": 31.9}, {"name": "Brock Purdy", "age": 26, "tier": 4, "val": 26.7, "floor": 22.7, "ceil": 30.7}, {"name": "Bo Nix", "age": 26, "tier": 4, "val": 25.6, "floor": 21.8, "ceil": 29.4}, {"name": "Trevor Lawrence", "age": 26, "tier": 4, "val": 24.8, "floor": 21.1, "ceil": 28.5}, {"name": "Jordan Love", "age": 27, "tier": 4, "val": 23.7, "floor": 20.1, "ceil": 27.3}, {"name": "Dak Prescott", "age": 32, "tier": 5, "val": 22.7, "floor": 19.3, "ceil": 26.1}, {"name": "Baker Mayfield", "age": 30, "tier": 6, "val": 21.6, "floor": 18.4, "ceil": 24.8}, {"name": "C.J. Stroud", "age": 24, "tier": 6, "val": 20.6, "floor": 17.5, "ceil": 23.7}, {"name": "Jared Goff", "age": 31, "tier": 6, "val": 19.6, "floor": 16.7, "ceil": 22.5}, {"name": "Cam Ward", "age": 23, "tier": 6, "val": 18.5, "floor": 15.7, "ceil": 21.3}, {"name": "Sam Darnold", "age": 28, "tier": 7, "val": 17.5, "floor": 14.9, "ceil": 20.1}, {"name": "Kyler Murray", "age": 28, "tier": 7, "val": 16.5, "floor": 14.0, "ceil": 19.0}, {"name": "Tyler Shough", "age": 26, "tier": 7, "val": 15.5, "floor": 13.2, "ceil": 17.8}, {"name": "Malik Willis", "age": 26, "tier": 7, "val": 14.5, "floor": 12.3, "ceil": 16.7}, {"name": "Bryce Young", "age": 24, "tier": 8, "val": 13.4, "floor": 11.4, "ceil": 15.4}, {"name": "Daniel Jones", "age": 28, "tier": 8, "val": 12.4, "floor": 10.5, "ceil": 14.3}, {"name": "Matthew Stafford", "age": 38, "tier": 8, "val": 11.3, "floor": 9.6, "ceil": 13.0}, {"name": "Michael Penix Jr.", "age": 25, "tier": 8, "val": 10.3, "floor": 8.8, "ceil": 11.8}, {"name": "J.J. McCarthy", "age": 23, "tier": 9, "val": 9.3, "floor": 7.9, "ceil": 10.7}, {"name": "Tua Tagovailoa", "age": 28, "tier": 9, "val": 8.2, "floor": 7.0, "ceil": 9.4}, {"name": "Shedeur Sanders", "age": 24, "tier": 9, "val": 7.2, "floor": 6.1, "ceil": 8.3}, {"name": "Mac Jones", "age": 27, "tier": 9, "val": 6.3, "floor": 5.4, "ceil": 7.2}, {"name": "Anthony Richardson Sr.", "age": 23, "tier": 9, "val": 5.2, "floor": 4.4, "ceil": 6.0}, {"name": "Justin Fields", "age": 27, "tier": 9, "val": 4.2, "floor": 3.6, "ceil": 4.8}, {"name": "Aaron Rodgers", "age": 42, "tier": 9, "val": 3.1, "floor": 2.6, "ceil": 3.6}, {"name": "Jacoby Brissett", "age": 33, "tier": 9, "val": 2.1, "floor": 1.8, "ceil": 2.4}, {"name": "Geno Smith", "age": 35, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Trey Lance", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Will Levis", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Kenny Pickett", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Mason Rudolph", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Deshaun Watson", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Davis Mills", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Mitchell Trubisky", "age": 31, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Joshua Dobbs", "age": 31, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jalen Milroe", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Sam Howell", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Carson Wentz", "age": 33, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Aidan O'Connell", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jimmy Garoppolo", "age": 34, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Brady Cook", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Philip Rivers", "age": 44, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Riley Leonard", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Gardner Minshew II", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tyrod Taylor", "age": 36, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jarrett Stidham", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Dillon Gabriel", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tanner McKee", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Spencer Rattler", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Joe Flacco", "age": 41, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Will Howard", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Marcus Mariota", "age": 32, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tyson Bagent", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jameis Winston", "age": 32, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Joe Milton III", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Russell Wilson", "age": 37, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Kirk Cousins", "age": 37, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Quinn Ewers", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Garrett Nussmeier", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tyler Huntley", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}], "RB": [{"name": "Bijan Robinson", "age": 24, "tier": 2, "val": 22.3, "floor": 19.0, "ceil": 25.6}, {"name": "Jahmyr Gibbs", "age": 24, "tier": 3, "val": 22.0, "floor": 18.7, "ceil": 25.3}, {"name": "Ashton Jeanty", "age": 22, "tier": 3, "val": 21.7, "floor": 18.4, "ceil": 25.0}, {"name": "De'Von Achane", "age": 24, "tier": 4, "val": 21.5, "floor": 18.3, "ceil": 24.7}, {"name": "Omarion Hampton", "age": 23, "tier": 4, "val": 21.2, "floor": 18.0, "ceil": 24.4}, {"name": "Jonathan Taylor", "age": 27, "tier": 4, "val": 20.9, "floor": 17.8, "ceil": 24.0}, {"name": "James Cook III", "age": 26, "tier": 4, "val": 20.5, "floor": 17.4, "ceil": 23.6}, {"name": "Breece Hall", "age": 24, "tier": 5, "val": 20.4, "floor": 17.3, "ceil": 23.5}, {"name": "TreVeyon Henderson", "age": 23, "tier": 6, "val": 20.1, "floor": 17.1, "ceil": 23.1}, {"name": "Kenneth Walker III", "age": 25, "tier": 6, "val": 19.8, "floor": 16.8, "ceil": 22.8}, {"name": "Chase Brown", "age": 26, "tier": 6, "val": 19.4, "floor": 16.5, "ceil": 22.3}, {"name": "Bucky Irving", "age": 23, "tier": 6, "val": 19.2, "floor": 16.3, "ceil": 22.1}, {"name": "Christian McCaffrey", "age": 29, "tier": 6, "val": 18.9, "floor": 16.1, "ceil": 21.7}, {"name": "Saquon Barkley", "age": 29, "tier": 6, "val": 18.6, "floor": 15.8, "ceil": 21.4}, {"name": "Quinshon Judkins", "age": 22, "tier": 7, "val": 18.2, "floor": 15.5, "ceil": 20.9}, {"name": "Kyren Williams", "age": 25, "tier": 7, "val": 17.9, "floor": 15.2, "ceil": 20.6}, {"name": "Travis Etienne Jr.", "age": 27, "tier": 7, "val": 17.6, "floor": 15.0, "ceil": 20.2}, {"name": "RJ Harvey", "age": 25, "tier": 7, "val": 17.4, "floor": 14.8, "ceil": 20.0}, {"name": "Josh Jacobs", "age": 28, "tier": 7, "val": 17.1, "floor": 14.5, "ceil": 19.7}, {"name": "Cam Skattebo", "age": 24, "tier": 7, "val": 16.8, "floor": 14.3, "ceil": 19.3}, {"name": "Javonte Williams", "age": 25, "tier": 8, "val": 16.5, "floor": 14.0, "ceil": 19.0}, {"name": "Derrick Henry", "age": 32, "tier": 8, "val": 16.2, "floor": 13.8, "ceil": 18.6}, {"name": "D'Andre Swift", "age": 27, "tier": 8, "val": 15.8, "floor": 13.4, "ceil": 18.2}, {"name": "Bhayshul Tuten", "age": 23, "tier": 8, "val": 15.7, "floor": 13.3, "ceil": 18.1}, {"name": "Zach Charbonnet", "age": 25, "tier": 8, "val": 15.2, "floor": 12.9, "ceil": 17.5}, {"name": "Jaylen Warren", "age": 27, "tier": 9, "val": 14.9, "floor": 12.7, "ceil": 17.1}, {"name": "Kyle Monangai", "age": 23, "tier": 9, "val": 14.6, "floor": 12.4, "ceil": 16.8}, {"name": "David Montgomery", "age": 28, "tier": 9, "val": 14.5, "floor": 12.3, "ceil": 16.7}, {"name": "Blake Corum", "age": 25, "tier": 9, "val": 14.1, "floor": 12.0, "ceil": 16.2}, {"name": "Rico Dowdle", "age": 27, "tier": 9, "val": 13.8, "floor": 11.7, "ceil": 15.9}, {"name": "Chuba Hubbard", "age": 26, "tier": 9, "val": 13.5, "floor": 11.5, "ceil": 15.5}, {"name": "Rhamondre Stevenson", "age": 28, "tier": 9, "val": 13.1, "floor": 11.1, "ceil": 15.1}, {"name": "Tyler Allgeier", "age": 25, "tier": 9, "val": 13.0, "floor": 11.0, "ceil": 15.0}, {"name": "Woody Marks", "age": 25, "tier": 9, "val": 12.6, "floor": 10.7, "ceil": 14.5}, {"name": "Trey Benson", "age": 23, "tier": 9, "val": 12.4, "floor": 10.5, "ceil": 14.3}, {"name": "Kenneth Gainwell", "age": 27, "tier": 9, "val": 12.0, "floor": 10.2, "ceil": 13.8}, {"name": "Tony Pollard", "age": 28, "tier": 9, "val": 11.7, "floor": 9.9, "ceil": 13.5}, {"name": "Tyrone Tracy Jr.", "age": 26, "tier": 9, "val": 11.5, "floor": 9.8, "ceil": 13.2}, {"name": "Jacory Croskey-Merritt", "age": 24, "tier": 9, "val": 11.1, "floor": 9.4, "ceil": 12.8}, {"name": "J.K. Dobbins", "age": 27, "tier": 9, "val": 10.8, "floor": 9.2, "ceil": 12.4}, {"name": "Rachaad White", "age": 27, "tier": 9, "val": 10.5, "floor": 8.9, "ceil": 12.1}, {"name": "Jordan Mason", "age": 26, "tier": 9, "val": 10.1, "floor": 8.6, "ceil": 11.6}, {"name": "Dylan Sampson", "age": 21, "tier": 9, "val": 9.9, "floor": 8.4, "ceil": 11.4}, {"name": "Tyjae Spears", "age": 24, "tier": 9, "val": 9.6, "floor": 8.2, "ceil": 11.0}, {"name": "Alvin Kamara", "age": 30, "tier": 9, "val": 9.3, "floor": 7.9, "ceil": 10.7}, {"name": "Jonathon Brooks", "age": 22, "tier": 9, "val": 9.2, "floor": 7.8, "ceil": 10.6}, {"name": "Braelon Allen", "age": 22, "tier": 9, "val": 8.7, "floor": 7.4, "ceil": 10.0}, {"name": "Kaleb Johnson", "age": 22, "tier": 9, "val": 8.3, "floor": 7.1, "ceil": 9.5}, {"name": "Isiah Pacheco", "age": 27, "tier": 9, "val": 8.1, "floor": 6.9, "ceil": 9.3}, {"name": "Aaron Jones Sr.", "age": 31, "tier": 9, "val": 7.8, "floor": 6.6, "ceil": 9.0}, {"name": "Tank Bigsby", "age": 23, "tier": 9, "val": 7.5, "floor": 6.4, "ceil": 8.6}, {"name": "James Conner", "age": 30, "tier": 9, "val": 7.2, "floor": 6.1, "ceil": 8.3}, {"name": "Kimani Vidal", "age": 24, "tier": 9, "val": 6.8, "floor": 5.8, "ceil": 7.8}, {"name": "Emanuel Wilson", "age": 26, "tier": 9, "val": 6.6, "floor": 5.6, "ceil": 7.6}, {"name": "Devin Neal", "age": 22, "tier": 9, "val": 6.3, "floor": 5.4, "ceil": 7.2}, {"name": "Brian Robinson Jr.", "age": 27, "tier": 9, "val": 5.9, "floor": 5.0, "ceil": 6.8}, {"name": "Ray Davis", "age": 26, "tier": 9, "val": 5.6, "floor": 4.8, "ceil": 6.4}, {"name": "Sean Tucker", "age": 24, "tier": 9, "val": 5.3, "floor": 4.5, "ceil": 6.1}, {"name": "Ollie Gordon II", "age": 22, "tier": 9, "val": 5.0, "floor": 4.2, "ceil": 5.8}, {"name": "Chris Rodriguez Jr.", "age": 26, "tier": 9, "val": 4.8, "floor": 4.1, "ceil": 5.5}, {"name": "Keaton Mitchell", "age": 24, "tier": 9, "val": 4.4, "floor": 3.7, "ceil": 5.1}, {"name": "Jaylen Wright", "age": 23, "tier": 9, "val": 4.1, "floor": 3.5, "ceil": 4.7}, {"name": "Kendre Miller", "age": 23, "tier": 9, "val": 3.8, "floor": 3.2, "ceil": 4.4}, {"name": "Najee Harris", "age": 28, "tier": 9, "val": 3.5, "floor": 3.0, "ceil": 4.0}, {"name": "Joe Mixon", "age": 29, "tier": 9, "val": 3.2, "floor": 2.7, "ceil": 3.7}, {"name": "Brashard Smith", "age": 22, "tier": 9, "val": 2.9, "floor": 2.5, "ceil": 3.3}, {"name": "DJ Giddens", "age": 22, "tier": 9, "val": 2.6, "floor": 2.2, "ceil": 3.0}, {"name": "Jaydon Blue", "age": 22, "tier": 9, "val": 2.2, "floor": 1.9, "ceil": 2.5}, {"name": "Isaiah Davis", "age": 24, "tier": 9, "val": 1.9, "floor": 1.6, "ceil": 2.2}, {"name": "Jarquez Hunter", "age": 23, "tier": 9, "val": 1.6, "floor": 1.4, "ceil": 1.8}, {"name": "Jordan James", "age": 22, "tier": 9, "val": 1.3, "floor": 1.1, "ceil": 1.5}, {"name": "Dameon Pierce", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Zamir White", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Damien Martinez", "age": 22, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Khalil Herbert", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Raheem Mostert", "age": 33, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Austin Ekeler", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jaret Patterson", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "George Holani", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Emari Demercado", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tyler Badie", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Zavier Scott", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Dare Ogunbowale", "age": 31, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tyler Goodson", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Ty Chandler", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Cam Akers", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Antonio Gibson", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Terrell Jennings", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Hassan Haskins", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Elijah Mitchell", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Kalel Mullings", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Zack Moss", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Alexander Mattison", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Sincere McCormick", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Rasheen Ali", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jeremy McNichols", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jaleel McLaughlin", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tahj Brooks", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Michael Carter", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Devin Singletary", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Isaac Guerendo", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jerome Ford", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Kareem Hunt", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Audric Estime", "age": 22, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jawhar Jordan", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Trevor Etienne", "age": 21, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Will Shipley", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Nick Chubb", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "LeQuint Allen Jr.", "age": 21, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Malik Davis", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "MarShawn Lloyd", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Miles Sanders", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Samaje Perine", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Phil Mafah", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Ty Johnson", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Justice Hill", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Raheim Sanders", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Chris Brooks", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Bam Knight", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Roschon Johnson", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Evan Hull", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}], "TE": [{"name": "Brock Bowers", "age": 23, "tier": 5, "val": 17.1, "floor": 14.5, "ceil": 19.7}, {"name": "Trey McBride", "age": 26, "tier": 5, "val": 16.6, "floor": 14.1, "ceil": 19.1}, {"name": "Colston Loveland", "age": 21, "tier": 6, "val": 16.1, "floor": 13.7, "ceil": 18.5}, {"name": "Tyler Warren", "age": 23, "tier": 6, "val": 15.6, "floor": 13.3, "ceil": 17.9}, {"name": "Harold Fannin Jr.", "age": 21, "tier": 7, "val": 15.2, "floor": 12.9, "ceil": 17.5}, {"name": "Tucker Kraft", "age": 25, "tier": 7, "val": 14.8, "floor": 12.6, "ceil": 17.0}, {"name": "Sam LaPorta", "age": 25, "tier": 7, "val": 14.3, "floor": 12.2, "ceil": 16.4}, {"name": "Kyle Pitts Sr.", "age": 25, "tier": 7, "val": 13.9, "floor": 11.8, "ceil": 16.0}, {"name": "Oronde Gadsden II", "age": 22, "tier": 8, "val": 13.5, "floor": 11.5, "ceil": 15.5}, {"name": "Dalton Kincaid", "age": 26, "tier": 8, "val": 13.0, "floor": 11.0, "ceil": 15.0}, {"name": "Jake Ferguson", "age": 27, "tier": 8, "val": 12.6, "floor": 10.7, "ceil": 14.5}, {"name": "Brenton Strange", "age": 25, "tier": 9, "val": 12.1, "floor": 10.3, "ceil": 13.9}, {"name": "George Kittle", "age": 32, "tier": 9, "val": 11.8, "floor": 10.0, "ceil": 13.6}, {"name": "Isaiah Likely", "age": 25, "tier": 9, "val": 11.3, "floor": 9.6, "ceil": 13.0}, {"name": "Mason Taylor", "age": 21, "tier": 9, "val": 10.7, "floor": 9.1, "ceil": 12.3}, {"name": "Dallas Goedert", "age": 31, "tier": 9, "val": 10.3, "floor": 8.8, "ceil": 11.8}, {"name": "Terrance Ferguson", "age": 23, "tier": 9, "val": 9.9, "floor": 8.4, "ceil": 11.4}, {"name": "AJ Barner", "age": 23, "tier": 9, "val": 9.5, "floor": 8.1, "ceil": 10.9}, {"name": "Juwan Johnson", "age": 29, "tier": 9, "val": 8.9, "floor": 7.6, "ceil": 10.2}, {"name": "Mark Andrews", "age": 30, "tier": 9, "val": 8.4, "floor": 7.1, "ceil": 9.7}, {"name": "T.J. Hockenson", "age": 28, "tier": 9, "val": 8.0, "floor": 6.8, "ceil": 9.2}, {"name": "Chig Okonkwo", "age": 26, "tier": 9, "val": 7.5, "floor": 6.4, "ceil": 8.6}, {"name": "Theo Johnson", "age": 25, "tier": 9, "val": 7.1, "floor": 6.0, "ceil": 8.2}, {"name": "Hunter Henry", "age": 31, "tier": 9, "val": 6.6, "floor": 5.6, "ceil": 7.6}, {"name": "Travis Kelce", "age": 36, "tier": 9, "val": 6.1, "floor": 5.2, "ceil": 7.0}, {"name": "David Njoku", "age": 29, "tier": 9, "val": 5.6, "floor": 4.8, "ceil": 6.4}, {"name": "Dalton Schultz", "age": 29, "tier": 9, "val": 5.2, "floor": 4.4, "ceil": 6.0}, {"name": "Gunnar Helm", "age": 23, "tier": 9, "val": 4.7, "floor": 4.0, "ceil": 5.4}, {"name": "Elijah Arroyo", "age": 23, "tier": 9, "val": 4.3, "floor": 3.7, "ceil": 4.9}, {"name": "Pat Freiermuth", "age": 27, "tier": 9, "val": 3.8, "floor": 3.2, "ceil": 4.4}, {"name": "Cade Otton", "age": 26, "tier": 9, "val": 3.3, "floor": 2.8, "ceil": 3.8}, {"name": "Michael Mayer", "age": 24, "tier": 9, "val": 2.9, "floor": 2.5, "ceil": 3.3}, {"name": "Jake Tonges", "age": 26, "tier": 9, "val": 2.4, "floor": 2.0, "ceil": 2.8}, {"name": "Evan Engram", "age": 31, "tier": 9, "val": 1.9, "floor": 1.6, "ceil": 2.2}, {"name": "Cole Kmet", "age": 27, "tier": 9, "val": 1.5, "floor": 1.3, "ceil": 1.7}, {"name": "John Bates", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Elijah Higgins", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Luke Schoonmaker", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Will Dissly", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jeremy Ruckert", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Charlie Kolar", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Daniel Bellinger", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Davis Allen", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Brevin Jordan", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Grant Calcaterra", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Adam Trautman", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tanner Hudson", "age": 31, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Hunter Long", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jackson Hawes", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Foster Moreau", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Josh Oliver", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Brock Wright", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Julian Hill", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Stone Smartt", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Kylen Granson", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tyler Conklin", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Greg Dulcich", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tommy Tremble", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Thomas Fidone II", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Darnell Washington", "age": 24, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Colby Parkinson", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Ben Sinnott", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Ja'Tavion Sanders", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Mike Gesicki", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jonnu Smith", "age": 30, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Noah Fant", "age": 28, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Dawson Knox", "age": 29, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Luke Musgrave", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Tyler Higbee", "age": 33, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Noah Gray", "age": 26, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Darren Waller", "age": 33, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Zach Ertz", "age": 35, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Erick All Jr.", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Taysom Hill", "age": 35, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Cade Stover", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jared Wiley", "age": 25, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Mitchell Evans", "age": 23, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Austin Hooper", "age": 31, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}, {"name": "Jelani Woods", "age": 27, "tier": 9, "val": 1.0, "floor": 1.0, "ceil": 1.2}]};
+const PICKS = [{"label": "1.01", "player": "Jeremiyah Love", "pos": "RB", "age": "20", "tier": 4, "round": 1, "val": 51.0, "floor": 43.4, "ceil": 58.6}, {"label": "1.02", "player": "Makai Lemon", "pos": "WR", "age": "21", "tier": 6, "round": 1, "val": 47.9, "floor": 40.7, "ceil": 55.1}, {"label": "1.03", "player": "Carnell Tate", "pos": "WR", "age": "21", "tier": 6, "round": 1, "val": 45.0, "floor": 38.2, "ceil": 51.7}, {"label": "1.04", "player": "Fernando Mendoza", "pos": "QB", "age": "22", "tier": 6, "round": 1, "val": 42.3, "floor": 36.0, "ceil": 48.6}, {"label": "1.05", "player": "Jordyn Tyson", "pos": "WR", "age": "21", "tier": 6, "round": 1, "val": 39.7, "floor": 33.7, "ceil": 45.7}, {"label": "1.06", "player": "Kenyon Sadiq", "pos": "TE", "age": "21", "tier": 7, "round": 1, "val": 37.3, "floor": 31.7, "ceil": 42.9}, {"label": "1.07", "player": "K.C. Concepcion", "pos": "WR", "age": "21", "tier": 8, "round": 1, "val": 35.1, "floor": 29.8, "ceil": 40.4}, {"label": "1.08", "player": "Denzel Boston", "pos": "WR", "age": "22", "tier": 8, "round": 1, "val": 32.9, "floor": 28.0, "ceil": 37.8}, {"label": "1.09", "player": "Eli Stowers", "pos": "TE", "age": "22", "tier": 9, "round": 1, "val": 30.9, "floor": 26.3, "ceil": 35.5}, {"label": "1.10", "player": "Ty Simpson", "pos": "QB", "age": "23", "tier": 9, "round": 1, "val": 29.1, "floor": 24.7, "ceil": 33.5}, {"label": "1.11", "player": "Omar Cooper Jr.", "pos": "WR", "age": "22", "tier": 9, "round": 1, "val": 27.3, "floor": 23.2, "ceil": 31.4}, {"label": "1.12", "player": "Jadarian Price", "pos": "RB", "age": "22", "tier": 9, "round": 1, "val": 25.6, "floor": 21.8, "ceil": 29.4}, {"label": "2.01", "player": "Jonah Coleman", "pos": "RB", "age": "22", "tier": 10, "round": 2, "val": 24.1, "floor": 20.5, "ceil": 27.7}, {"label": "2.02", "player": "Elijah Sarratt", "pos": "WR", "age": "22", "tier": 10, "round": 2, "val": 22.6, "floor": 19.2, "ceil": 26.0}, {"label": "2.03", "player": "Chris Brazzell II", "pos": "WR", "age": "-", "tier": 10, "round": 2, "val": 21.3, "floor": 18.1, "ceil": 24.5}, {"label": "2.04", "player": "Chris Bell", "pos": "WR", "age": "-", "tier": 10, "round": 2, "val": 20.0, "floor": 17.0, "ceil": 23.0}, {"label": "2.05", "player": "Emmett Johnson", "pos": "RB", "age": "22", "tier": 10, "round": 2, "val": 18.8, "floor": 16.0, "ceil": 21.6}, {"label": "2.06", "player": "Mike Washington Jr.", "pos": "RB", "age": "-", "tier": 10, "round": 2, "val": 17.6, "floor": 15.0, "ceil": 20.2}, {"label": "2.07", "player": "Germie Bernard", "pos": "WR", "age": "22", "tier": 10, "round": 2, "val": 16.6, "floor": 14.1, "ceil": 19.1}, {"label": "2.08", "player": "Zachariah Branch", "pos": "WR", "age": "22", "tier": 11, "round": 2, "val": 15.6, "floor": 13.3, "ceil": 17.9}, {"label": "2.09", "player": "Nicholas Singleton", "pos": "RB", "age": "22", "tier": 11, "round": 2, "val": 14.6, "floor": 12.4, "ceil": 16.8}, {"label": "2.10", "player": "Ja'Kobi Lane", "pos": "WR", "age": "21", "tier": 11, "round": 2, "val": 13.7, "floor": 11.6, "ceil": 15.8}, {"label": "2.11", "player": "Malachi Fields", "pos": "WR", "age": "-", "tier": 11, "round": 2, "val": 12.9, "floor": 11.0, "ceil": 14.8}, {"label": "2.12", "player": "Antonio Williams", "pos": "WR", "age": "21", "tier": 11, "round": 2, "val": 12.1, "floor": 10.3, "ceil": 13.9}, {"label": "3.01", "player": "Ted Hurst", "pos": "WR", "age": "-", "tier": 12, "round": 3, "val": 11.4, "floor": 9.7, "ceil": 13.1}, {"label": "3.02", "player": "Skyler Bell", "pos": "WR", "age": "23", "tier": 11, "round": 3, "val": 10.7, "floor": 9.1, "ceil": 12.3}, {"label": "3.03", "player": "Max Klare", "pos": "TE", "age": "-", "tier": 11, "round": 3, "val": 10.0, "floor": 8.5, "ceil": 11.5}, {"label": "3.04", "player": "Kaytron Allen", "pos": "RB", "age": "23", "tier": 11, "round": 3, "val": 9.4, "floor": 8.0, "ceil": 10.8}, {"label": "3.05", "player": "Bryce Lance", "pos": "WR", "age": "-", "tier": 13, "round": 3, "val": 8.9, "floor": 7.6, "ceil": 10.2}, {"label": "3.06", "player": "Dean Connors", "pos": "RB", "age": "-", "tier": 15, "round": 3, "val": 8.3, "floor": 7.1, "ceil": 9.5}, {"label": "3.07", "player": "Cole Payton", "pos": "QB", "age": "-", "tier": 14, "round": 3, "val": 7.8, "floor": 6.6, "ceil": 9.0}, {"label": "3.08", "player": "Michael Trigg", "pos": "TE", "age": "-", "tier": 12, "round": 3, "val": 7.3, "floor": 6.2, "ceil": 8.4}, {"label": "3.09", "player": "Demond Claiborne", "pos": "RB", "age": "22", "tier": 12, "round": 3, "val": 6.9, "floor": 5.9, "ceil": 7.9}, {"label": "3.10", "player": "Brenen Thompson", "pos": "WR", "age": "-", "tier": 13, "round": 3, "val": 6.5, "floor": 5.5, "ceil": 7.5}, {"label": "3.11", "player": "Kevin Coleman Jr.", "pos": "WR", "age": "-", "tier": 13, "round": 3, "val": 6.1, "floor": 5.2, "ceil": 7.0}, {"label": "3.12", "player": "Eric McAlister", "pos": "WR", "age": "-", "tier": 13, "round": 3, "val": 5.7, "floor": 4.8, "ceil": 6.6}, {"label": "4.01", "player": "Justin Joly", "pos": "TE", "age": "-", "tier": 13, "round": 4, "val": 5.4, "floor": 4.6, "ceil": 6.2}, {"label": "4.02", "player": "Noah Whittington", "pos": "RB", "age": "-", "tier": 15, "round": 4, "val": 5.0, "floor": 4.2, "ceil": 5.8}, {"label": "4.03", "player": "Sawyer Robertson", "pos": "QB", "age": "-", "tier": 15, "round": 4, "val": 4.7, "floor": 4.0, "ceil": 5.4}, {"label": "4.04", "player": "Adam Randall", "pos": "RB", "age": "-", "tier": 12, "round": 4, "val": 4.5, "floor": 3.8, "ceil": 5.2}, {"label": "4.05", "player": "Carson Beck", "pos": "QB", "age": "-", "tier": 14, "round": 4, "val": 4.2, "floor": 3.6, "ceil": 4.8}, {"label": "4.06", "player": "Deion Burks", "pos": "WR", "age": "-", "tier": 14, "round": 4, "val": 3.9, "floor": 3.3, "ceil": 4.5}, {"label": "4.07", "player": "Josh Cameron", "pos": "WR", "age": "-", "tier": 14, "round": 4, "val": 3.7, "floor": 3.1, "ceil": 4.3}, {"label": "4.08", "player": "Seth McGowan", "pos": "RB", "age": "-", "tier": 12, "round": 4, "val": 3.5, "floor": 3.0, "ceil": 4.0}, {"label": "4.09", "player": "Tyren Montgomery", "pos": "WR", "age": "-", "tier": 14, "round": 4, "val": 3.3, "floor": 2.8, "ceil": 3.8}, {"label": "4.10", "player": "J'Mari Taylor", "pos": "RB", "age": "-", "tier": 12, "round": 4, "val": 3.1, "floor": 2.6, "ceil": 3.6}, {"label": "4.11", "player": "Oscar Delp", "pos": "TE", "age": "-", "tier": 14, "round": 4, "val": 2.9, "floor": 2.5, "ceil": 3.3}, {"label": "4.12", "player": "Taylen Green", "pos": "QB", "age": "-", "tier": 16, "round": 4, "val": 2.7, "floor": 2.3, "ceil": 3.1}];
+
+const SLOTS = { QB:2, RB:2, WR:3, TE:1, FLEX:2 };
+const filled   = { QB:0, RB:0, WR:0, TE:0, FLEX:0 };
+const acquired = {};
+let pos='WR', sortMode='val', searchTerm='', chart=null, pendingIdx=null;
+
+// ── Theme ─────────────────────────────────────────────────────
+function toggleTheme() {
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  document.documentElement.dataset.theme = isDark ? 'light' : 'dark';
+  document.getElementById('themeBtn').textContent = isDark ? '🌙 Dark' : '☀️ Light';
+  localStorage.setItem('auction-theme', document.documentElement.dataset.theme);
+  if (chart) renderChart(pos);
+}
+(function() {
+  const saved = localStorage.getItem('auction-theme');
+  if (saved === 'dark') {
+    document.documentElement.dataset.theme = 'dark';
+    document.getElementById('themeBtn').textContent = '☀️ Light';
+  }
+})();
+
+// ── Age color ─────────────────────────────────────────────────
+function ageColor(age) {
+  const a = parseInt(age);
+  if (!a || isNaN(a)) return '#888';
+  if (a <= 22) return '#1D9E75';
+  if (a <= 25) return '#639922';
+  if (a <= 27) return '#EF9F27';
+  return '#E24B4A';
+}
+
+// ── Chart colors (read CSS vars so they respect dark mode) ────
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// ── Budget ────────────────────────────────────────────────────
+function getSpent() { return Object.values(acquired).reduce((s,v) => s+v.paid, 0); }
+
+function updateBudget() {
+  const sp = getSpent(), rem = Math.max(0, BUDGET-sp), pct = rem/BUDGET*100;
+  document.getElementById('bAmt').textContent = '$'+Math.round(rem);
+  document.getElementById('bCom').textContent = '$'+Math.round(sp)+' spent';
+  const f = document.getElementById('bFill');
+  f.style.width = pct+'%';
+  f.style.background = rem<60 ? '#c0392b' : rem<130 ? '#e67e22' : '#27ae60';
+  const n = Object.keys(acquired).length;
+  document.getElementById('bSub').textContent = n > 0
+    ? n+' player'+(n>1?'s':'')+' acquired — click to edit or remove'
+    : 'Click any bar to log what you paid';
+  renderTags();
+  updateBestValue();
+  updateNominate();
+}
+
+function renderTags() {
+  const el = document.getElementById('aTags');
+  const entries = Object.entries(acquired);
+  if (!entries.length) { el.style.display='none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = entries.map(([k,v]) =>
+    `<span class="tag">${v.name} <strong>$${v.paid}</strong>
+     <span class="tag-x" onclick="removeByKey('${k}')">×</span></span>`
+  ).join('');
+}
+
+function removeByKey(key) {
+  const v = acquired[key];
+  if (v) adjustSlot(v.pos, -1);
+  delete acquired[key];
+  updateBudget(); renderNeeds();
+  if (chart) { chart.data.datasets[0].backgroundColor = getColors(visPlayers(), pos); chart.update(); }
+}
+
+function resetAll() {
+  Object.keys(acquired).forEach(k => delete acquired[k]);
+  Object.keys(filled).forEach(k => filled[k] = 0);
+  cancelAcquire(); updateBudget(); renderNeeds();
+  if (chart) { chart.data.datasets[0].backgroundColor = getColors(visPlayers(), pos); chart.update(); }
+}
+
+function startAcquire(idx) {
+  const ps = visPlayers(), p = ps[idx];
+  const key = (pos==='PICKS' ? 'PICKS' : pos)+'_'+idx;
+  const ex  = acquired[key];
+  pendingIdx = idx;
+  document.getElementById('aName').textContent = (ex?'Edit: ':'Acquired: ')+(pos==='PICKS' ? p.label+' Pick ('+p.player+')' : p.name);
+  document.getElementById('aInput').value = ex ? ex.paid : p.val;
+  document.getElementById('aRemove').style.display = ex ? 'inline-block' : 'none';
+  document.getElementById('aPanel').style.display = 'block';
+  setTimeout(() => document.getElementById('aInput').select(), 50);
+}
+
+function confirmAcquire() {
+  if (pendingIdx === null) return;
+  const val = parseInt(document.getElementById('aInput').value) || 0;
+  if (val < 1) return;
+  const ps  = visPlayers(), p = ps[pendingIdx];
+  const key = (pos==='PICKS' ? 'PICKS' : pos)+'_'+pendingIdx;
+  const wasAcq = !!acquired[key];
+  const ppos = pos==='PICKS' ? p.pos : pos;
+  if (!wasAcq) adjustSlot(ppos, 1);
+  acquired[key] = { name: pos==='PICKS' ? p.label+' Pick' : p.name, paid: val, pos: ppos };
+  cancelAcquire();
+  if (chart) { chart.data.datasets[0].backgroundColor = getColors(visPlayers(), pos); chart.update(); }
+  updateBudget(); renderNeeds();
+}
+
+function cancelAcquire() { document.getElementById('aPanel').style.display='none'; pendingIdx=null; }
+function removeAcquire() { if (pendingIdx!==null) removeByKey((pos==='PICKS'?'PICKS':pos)+'_'+pendingIdx); cancelAcquire(); }
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('aPanel').style.display === 'block') {
+    if (e.key === 'Enter') confirmAcquire();
+    if (e.key === 'Escape') cancelAcquire();
+  }
+});
+
+// ── Roster Needs ─────────────────────────────────────────────
+function adjustSlot(ppos, delta) {
+  const p = (ppos||'WR').toUpperCase();
+  if (!SLOTS[p]) return;
+  if (delta > 0) {
+    if (filled[p] < SLOTS[p]) filled[p]++;
+    else if (p!=='QB' && p!=='FLEX' && filled.FLEX < SLOTS.FLEX) filled.FLEX++;
+  } else {
+    if (filled[p] > 0) filled[p]--;
+    else if (filled.FLEX > 0) filled.FLEX--;
+  }
+}
+
+function renderNeeds() {
+  const grid = document.getElementById('needsGrid');
+  grid.innerHTML = ['QB','RB','WR','TE','FLEX'].map(p => {
+    const total = SLOTS[p], f = Math.min(filled[p], total);
+    return `<div class="need-pos">
+      <div class="need-label">${p}</div>
+      <div class="need-dots">${Array.from({length:total},(_,i)=>
+        `<div class="ndot${i<f?' filled':''}"></div>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateNominate() {
+  const banner = document.getElementById('nomBanner');
+  const full = Object.keys(SLOTS).filter(p => p!=='FLEX' && filled[p] >= SLOTS[p]);
+  if (!full.length) { banner.style.display='none'; return; }
+  const sugg = [];
+  full.forEach(p => {
+    (D[p]||[]).filter((_,i) => !acquired[p+'_'+i]).slice(0,2).forEach(pl => sugg.push(`${pl.name} ($${pl.val})`));
+  });
+  if (!sugg.length) { banner.style.display='none'; return; }
+  banner.style.display = 'block';
+  banner.innerHTML = `📣 Nominate to drain budgets: <strong>${sugg.slice(0,3).join(' · ')}</strong>`;
+}
+
+// ── Best Value ────────────────────────────────────────────────
+function updateBestValue() {
+  const banner = document.getElementById('bestBanner');
+  let best = null;
+  ['QB','RB','WR','TE'].forEach(p => {
+    (D[p]||[]).forEach((pl,i) => {
+      if (!acquired[p+'_'+i] && (!best || pl.val > best.val)) best = {...pl, pos:p};
+    });
+  });
+  if (!best) { banner.style.display='none'; return; }
+  banner.style.display = 'block';
+  banner.innerHTML = `⭐ <strong>Best remaining:</strong> ${best.name} (${best.pos}, Tier ${best.tier}) — $${best.val}`;
+}
+
+// ── Search & Sort ─────────────────────────────────────────────
+function onSearch() { searchTerm = document.getElementById('searchInput').value.toLowerCase(); renderChart(pos); }
+
+function setSort(m) {
+  sortMode = m;
+  ['sVal','sAge','sTier'].forEach(id => document.getElementById(id).classList.remove('on'));
+  document.getElementById(m==='val'?'sVal':m==='age'?'sAge':'sTier').classList.add('on');
+  renderChart(pos);
+}
+
+function visPlayers() {
+  if (pos === 'PICKS') return PICKS.filter(p =>
+    !searchTerm || p.label.includes(searchTerm) || p.player.toLowerCase().includes(searchTerm)
+  );
+  let ps = [...(D[pos]||[])];
+  if (searchTerm) ps = ps.filter(p => p.name.toLowerCase().includes(searchTerm));
+  if (sortMode === 'age')  ps.sort((a,b) => (a.age||99)-(b.age||99));
+  else if (sortMode === 'tier') ps.sort((a,b) => a.tier-b.tier || b.val-a.val);
+  else ps.sort((a,b) => b.val-a.val);
+  return ps;
+}
+
+// ── Tier Cards ────────────────────────────────────────────────
+function grp(ps) { const m={}; ps.forEach(p => { if(!m[p.tier]) m[p.tier]=[]; m[p.tier].push(p); }); return m; }
+
+function renderCards() {
+  const el = document.getElementById('cards');
+  if (pos === 'PICKS') {
+    const rounds = {};
+    PICKS.forEach(p => { if(!rounds[p.round]) rounds[p.round]=[]; rounds[p.round].push(p); });
+    el.innerHTML = Object.entries(rounds).map(([r,arr]) => {
+      const lo=Math.min(...arr.map(p=>p.val)), hi=Math.max(...arr.map(p=>p.val));
+      return `<div class="card" style="border-left-color:${RC[r]||'#888'}">
+        <div class="clbl">Round ${r}</div>
+        <div class="cval">$${lo}–$${hi}</div>
+        <div class="csub">${arr.length} picks</div></div>`;
+    }).join('');
+    return;
+  }
+  const ps = visPlayers();
+  el.innerHTML = Object.entries(grp(ps)).map(([t,arr]) => {
+    const lo=Math.min(...arr.map(p=>p.val)), hi=Math.max(...arr.map(p=>p.val));
+    return `<div class="card" style="border-left-color:${TC[t]||TC[6]}">
+      <div class="clbl">Tier ${t} — ${TN[t]||'Other'}</div>
+      <div class="cval">$${lo}${lo!==hi?'–$$'+hi:''}</div>
+      <div class="csub">${arr.length} player${arr.length>1?'s':''}</div></div>`;
+  }).join('');
+}
+
+// ── Bar Colors ────────────────────────────────────────────────
+function getColors(ps, p) {
+  return ps.map((_,i) => {
+    const key = (p==='PICKS'?'PICKS':p)+'_'+i;
+    if (acquired[key]) return 'rgba(128,128,128,0.2)';
+    return p==='PICKS' ? (RC[ps[i].round]||'#888') : (TC[ps[i].tier]||TC[6]);
+  });
+}
+
+// ── Chart Plugin (age dots + tier dividers) ───────────────────
+const decPlugin = { id:'dec', afterDraw(ch) {
+  const { ctx, chartArea, scales } = ch;
+  const ps = visPlayers();
+  if (!ps.length) return;
+
+  // Age dots (left side of each bar)
+  if (pos !== 'PICKS') {
+    for (let i=0; i<ps.length; i++) {
+      const y = scales.y.getPixelForValue(i);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(chartArea.left+5, y, 3.5, 0, Math.PI*2);
+      ctx.fillStyle = ageColor(ps[i].age);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // Dividers between tiers / rounds
+  const getGroup = p => (pos==='PICKS') ? p.round : p.tier;
+  let prev = getGroup(ps[0]);
+  const groupLabel = pos==='PICKS' ? 'Round ' : 'Tier ';
+
+  ctx.font = '11px -apple-system,sans-serif';
+  ctx.fillStyle = 'rgba(120,120,120,.65)';
+  ctx.textAlign = 'right';
+  ctx.fillText(groupLabel+prev, chartArea.right-4, chartArea.top+12);
+
+  for (let i=1; i<ps.length; i++) {
+    const cur = getGroup(ps[i]);
+    if (cur !== prev) {
+      const y = (scales.y.getPixelForValue(i-1) + scales.y.getPixelForValue(i)) / 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(chartArea.left, y);
+      ctx.lineTo(chartArea.right, y);
+      ctx.strokeStyle = 'rgba(140,140,140,.35)';
+      ctx.setLineDash([5,4]);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+      ctx.font = '11px -apple-system,sans-serif';
+      ctx.fillStyle = 'rgba(120,120,120,.65)';
+      ctx.textAlign = 'right';
+      ctx.fillText(groupLabel+cur, chartArea.right-4, y-3);
+      prev = cur;
+    }
+  }
+}};
+
+// ── Render Chart ─────────────────────────────────────────────
+function renderChart(p) {
+  const ps = visPlayers();
+  document.getElementById('wrap').style.height = Math.max(320, ps.length*22+60)+'px';
+  if (chart) chart.destroy();
+
+  const gridColor  = cssVar('--chart-grid');
+  const tickColor  = cssVar('--chart-tick');
+  const titleColor = cssVar('--chart-title');
+
+  chart = new Chart(document.getElementById('chart').getContext('2d'), {
+    type: 'bar',
+    plugins: [decPlugin],
+    data: {
+      labels: ps.map(p => pos==='PICKS' ? p.label+' — '+p.pos : p.name),
+      datasets: [{
+        data: ps.map(p => p.val),
+        backgroundColor: getColors(ps, p),
+        borderRadius: 3,
+        borderSkipped: false,
+        barThickness: 14,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { left: 4 } },
+      onClick: (ev, els) => { if (els.length) startAcquire(els[0].index); },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: c => {
+              const key = (pos==='PICKS'?'PICKS':pos)+'_'+c[0].dataIndex;
+              const acq = acquired[key];
+              return c[0].label + (acq ? ' ✓ $'+acq.paid : '');
+            },
+            label: c => {
+              const p = ps[c.dataIndex];
+              if (pos === 'PICKS') return [
+                ` Prospect: ${p.player} (${p.pos})`,
+                ` Bid $${p.floor}–$${p.ceil} · Tier ${p.tier}`
+              ];
+              return [
+                ` Value: $${p.val}   (bid $${p.floor}–$${p.ceil})`,
+                ` Tier ${p.tier} · Age ${p.age||'?'}`
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          grid: { color: gridColor },
+          ticks: { callback: v => '$'+v, font: { size:11 }, color: tickColor },
+          title: { display:true, text:'Suggested auction value ($)', font:{ size:11 }, color: titleColor }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { font: { size:11 }, color: tickColor }
+        }
+      }
+    }
+  });
+}
+
+// ── Set Tab ───────────────────────────────────────────────────
+function setPos(p) {
+  pos = p;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.p===p));
+  document.getElementById('searchInput').value = ''; searchTerm = '';
+  renderCards(); renderChart(p);
+}
+
+// ── Init ─────────────────────────────────────────────────────
+[['WR','WR'],['QB','QB'],['RB','RB'],['TE','TE'],['PICKS','🏈 Picks']].forEach(([p,label]) => {
+  const b = document.createElement('button');
+  b.className = 'tab'+(p==='PICKS'?' ptab':'')+(p===pos?' on':'');
+  b.dataset.p = p; b.textContent = label;
+  b.onclick = () => setPos(p);
+  document.getElementById('tabs').appendChild(b);
+});
+
+document.getElementById('legend').innerHTML = Object.entries(TN).map(([t,n]) =>
+  `<span><span class="dot" style="background:${TC[t]}"></span>Tier ${t}: ${n}</span>`
+).join('');
+
+renderNeeds(); updateBudget(); setPos('WR');
+</script>
+</body>
+</html>
